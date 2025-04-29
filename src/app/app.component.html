@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>F2GO Asistant</title>
+  </head>
+  <body class="bg-gray-50 font-sans flex h-screen">
+    <!-- Sidebar -->
+    <div class="hidden md:flex md:flex-shrink-0" *ngIf="isAuth">
+      <app-sidebar></app-sidebar>
+    </div>
+
+    <!-- Main content ~ angular router -->
+    <div class="flex-1 overflow-auto">
+      <router-outlet />
+    </div>
+  </body>
+</html>
