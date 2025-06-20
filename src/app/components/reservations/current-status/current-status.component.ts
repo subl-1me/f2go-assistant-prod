@@ -6,4 +6,6 @@ import { Component } from '@angular/core';
   templateUrl: './current-status.component.html',
   styleUrl: './current-status.component.css',
 })
-export class CurrentStatusComponent {}
+export class CurrentStatusComponent {
+  constructor() {}
+}
