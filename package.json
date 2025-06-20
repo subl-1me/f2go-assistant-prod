@@ -5,7 +5,7 @@
   "scripts": {
     "ng": "ng",
     "proxy": "node proxy.js",
-    "electron": "concurrently \"ng serve\" \"npm run proxy\" \"electron .\"",
+    "electron": "concurrently \"ng serve\" \"electron .\"",
     "npm start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
