@@ -7,6 +7,11 @@ export class AuthService {
   constructor() {}
 
   public isAuthenticated(): boolean {
-    return true;
+    const mAutSessionToken = localStorage.getItem('mAutSessionToken');
+    const aspAntiForgeryToken = localStorage.getItem('antiForgeryToken');
+    const verificationToken = localStorage.getItem('verificationToken');
+    return mAutSessionToken && aspAntiForgeryToken && verificationToken
+      ? true
+      : false;
   }
 }
