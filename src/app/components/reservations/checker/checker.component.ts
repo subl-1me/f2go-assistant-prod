@@ -8,22 +8,29 @@ import {
   PAYLOAD_STATUS_NOSHOW,
   PAYLOAD_STATUS_CHOUT,
 } from '../../../const';
-import { HttpResponse } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
 
 const roomTypes = ['Double', 'Single', 'Suite'];
 
 @Component({
   selector: 'app-checker',
-  imports: [NgIf],
+  imports: [NgIf, FormsModule],
   templateUrl: './checker.component.html',
   styleUrl: './checker.component.css',
 })
 export class CheckerComponent {
-  public inHouseReservations: Reservation[] = [];
-  public isLoadingInHouseReservations: boolean = true;
+  public inHouseReservations: Reservation[];
+  public selectedReservations: Reservation[];
+  public isLoadingInHouseReservations: boolean;
+  public allSelected: boolean = false;
+  public searchTerm: string;
 
   constructor(private frontService: FrontService) {
-    this.getInHouseReservations();
+    this.inHouseReservations = [];
+    this.selectedReservations = [];
+    this.isLoadingInHouseReservations = true;
+    this.searchTerm = '';
+    // this.getInHouseReservations();
   }
 
   async getInHouseReservations() {
@@ -84,5 +91,31 @@ export class CheckerComponent {
           })
         );
       });
+  }
+
+  async confirmSelectedReservations() {
+    alert('Confirm?');
+    console.log(this.selectedReservations);
+  }
+
+  filterReservations() {}
+
+  toggleSelectAll() {
+    if (this.allSelected) {
+      this.selectedReservations = [...this.inHouseReservations];
+    } else {
+      this.selectedReservations = [];
+    }
+  }
+
+  toggleSelect(reservation: Reservation) {
+    const index = this.selectedReservations.findIndex(
+      (res) => res.id === reservation.id
+    );
+    if (index > -1) {
+      this.selectedReservations.splice(index, 1);
+    } else {
+      this.selectedReservations.push(reservation);
+    }
   }
 }
