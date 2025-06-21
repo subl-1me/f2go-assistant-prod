@@ -1,5 +1,6 @@
 .card-hover:hover {
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
 }
 
 .bg-card-icon {
@@ -8,6 +9,13 @@
 }
 
 .card-title {
-  cursor: pointer;
   color: #234ac9;
+}
+
+.document-btn {
+  @apply py-3 px-4 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors flex items-center;
+}
+
+.document-btn:hover {
+  @apply transform scale-[1.02];
 }

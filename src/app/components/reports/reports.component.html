@@ -1,90 +1,193 @@
 <!-- HeaderP -->
-<header class="bg-white shadow-sm p-4">
+<header class="bg-white shadow-sm p-4 sticky top-0 z-10">
   <div class="flex justify-between items-center">
     <div>
-      <h1 class="text-2xl font-bold text-gray-800">Reportes</h1>
+      <h1 class="text-2xl font-bold text-gray-800">Reportes de Auditoría</h1>
       <p class="text-gray-600">
-        Aquí podrás imprimir reportes relevantes de las operaciones del hotel.
+        Automatización de procesos para impresión de resúmenes, comparación de
+        transacciones y generación de reportes.
       </p>
+    </div>
+    <div class="p-2 rounded-full bg-blue-50">
+      <i class="fas fa-file-contract text-blue-600 text-xl"></i>
     </div>
   </div>
 </header>
 
 <!-- Content  -->
 <main class="p-6">
-  <div class="grid grid-cols-1 md:grid-cols lg:grid-cols gap-6 mb-8">
-    <div class="bg-white rounded-xl shadow-md p-6 card-hover transition-all">
-      <!-- Header -->
-      <div class="flex items-center cursor-pointer">
-        <div class="p-3 rounded-full bg-card-icon mr-4">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    <!-- Reportes de Auditoría Card -->
+    <div
+      class="bg-white rounded-xl shadow-md p-6 card-hover transition-all hover:transform hover:-translate-y-1"
+    >
+      <div class="flex items-start">
+        <div class="p-3 rounded-full bg-card-icon mr-4 flex-shrink-0">
           <i class="fas fa-clipboard-check text-xl"></i>
         </div>
-        <div>
-          <p class="font-bold card-title">Reportes de auditoría</p>
-          <h3 class="text-sm">
+        <div class="flex-grow">
+          <h2 class="font-bold card-title text-lg mb-1">Reportes Diarios</h2>
+          <p class="text-sm text-gray-600 mb-4">
             Consulta e imprime los reportes generados en una fecha específica.
-          </h3>
-        </div>
-      </div>
+          </p>
 
-      <div class="mt-4 pt-4 border-t border-gray-100">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          <!-- Date selector -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1"
-              >Fecha</label
-            >
-            <input
-              type="date"
-              class="w-full rounded-xl border border-gray-200 p-2.5 text-sm focus:ring-blue-500 focus:border-blue-500"
-            />
+          <div class="mt-4 pt-4 border-t border-gray-100">
+            <div class="grid grid-cols-1 gap-4 mb-4">
+              <!-- Date selector with clear button -->
+              <div class="relative">
+                <label class="block text-sm font-medium text-gray-700 mb-1"
+                  >Fecha del reporte</label
+                >
+                <div class="flex items-center gap-2">
+                  <input
+                    type="date"
+                    class="w-full rounded-xl border border-gray-200 p-2.5 text-sm focus:ring-blue-500 focus:border-blue-500"
+                    id="report-date"
+                  />
+                  <button
+                    class="text-gray-400 hover:text-gray-600 p-2"
+                    title="Limpiar fecha"
+                  >
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex justify-between items-center mt-6">
+              <div class="text-xs text-gray-500">
+                <i class="fas fa-info-circle mr-1"></i> Selecciona una fecha o
+                usa las opciones rápidas
+              </div>
+              <div class="flex gap-2">
+                <button
+                  class="bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-4 rounded-xl text-sm font-medium transition-colors"
+                >
+                  Ayer
+                </button>
+                <button
+                  class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-xl text-sm font-medium transition-colors flex items-center"
+                >
+                  <i class="fas fa-print mr-2"></i> Imprimir
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-        <div>
-          <button
-            class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-xl text-sm font-medium transition-colors float-end ml-3"
-          >
-            Seleccionar reportes de ayer
-          </button>
+      </div>
+    </div>
+
+    <!-- Resumen de Cajero Card -->
+    <div
+      class="bg-white rounded-xl shadow-md p-6 card-hover transition-all hover:transform hover:-translate-y-1"
+    >
+      <div class="flex items-start">
+        <div
+          class="p-3 rounded-full bg-orange-100 mr-4 flex-shrink-0 text-orange-500"
+        >
+          <i class="fas fa-cash-register text-xl"></i>
         </div>
-        <div>
-          <button
-            class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-xl text-sm font-medium transition-colors float-end"
-          >
-            <i class="fas fa-print mr-2"></i> Imprimir reportes
-          </button>
+        <div class="flex-grow">
+          <h2 class="font-bold text-lg mb-1 text-orange-600">
+            Resumen de Cajero
+          </h2>
+          <p class="text-sm text-gray-600 mb-4">
+            Genera el resumen diario de operaciones de caja con un solo clic.
+          </p>
+
+          <div class="mt-4 pt-4 border-t border-gray-100">
+            <div class="flex justify-between items-center">
+              <div class="text-xs text-gray-500">
+                <i class="fas fa-clock mr-1"></i> Último generado: 05/06/2023
+              </div>
+              <button
+                class="bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-xl text-sm font-medium transition-colors flex items-center"
+              >
+                <i class="fas fa-file-export mr-2"></i> Generar PDF
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
   <!-- SMART comparation  -->
-  <div class="grid grid-cols-1 md:grid-cols lg:grid-cols gap-6 mb-8">
-    <div class="bg-white rounded-xl shadow-md p-6 card-hover transition-all">
-      <!-- Header -->
-      <div class="flex items-center cursor-pointer">
-        <div class="p-3 rounded-full bg-card-icon mr-4">
+  <div class="grid grid-cols-1 gap-6 mb-8">
+    <div
+      class="bg-white rounded-xl shadow-md p-6 card-hover transition-all hover:transform hover:-translate-y-1"
+    >
+      <div class="flex items-start">
+        <div
+          class="p-3 rounded-full bg-purple-100 mr-4 flex-shrink-0 text-purple-600"
+        >
           <i class="fas fa-not-equal text-xl"></i>
         </div>
-        <div>
-          <p class="font-bold card-title">Comparación de reporte SMART</p>
-          <h3 class="text-sm">
-            Compara automáticamente las transacciones del reporte SMART con el
-            reporte de Cajeros generado por Front2Go. Al finalizar el proceso,
-            se imprimirán ambos reportes.
-          </h3>
+        <div class="flex-grow">
+          <h2 class="font-bold text-lg mb-1 text-purple-600">
+            Comparación SMART
+          </h2>
+          <p class="text-sm text-gray-600 mb-4">
+            Comparación automática entre transacciones del reporte SMART y el
+            reporte de Cajeros (Front2Go).
+          </p>
+
+          <div class="mt-4 pt-4 border-t border-gray-100">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1"
+                  >Fecha reporte SMART</label
+                >
+                <input
+                  type="date"
+                  class="w-full rounded-xl border border-gray-200 p-2.5 text-sm"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1"
+                  >Fecha reporte Cajeros</label
+                >
+                <input
+                  type="date"
+                  class="w-full rounded-xl border border-gray-200 p-2.5 text-sm"
+                />
+              </div>
+            </div>
+
+            <div class="flex justify-between items-center">
+              <div class="text-xs text-gray-500">
+                <i class="fas fa-exclamation-triangle mr-1"></i> Se imprimirán
+                ambos reportes al finalizar
+              </div>
+              <button
+                class="bg-purple-600 hover:bg-purple-700 text-white py-2 px-6 rounded-xl text-sm font-medium transition-colors flex items-center"
+              >
+                <i class="fas fa-play mr-2"></i> Iniciar comparación
+              </button>
+            </div>
+          </div>
         </div>
       </div>
+    </div>
+  </div>
 
-      <!-- Botón de expandir/colapsar -->
-      <div class="mt-4 pt-4 border-t border-gray-100">
-        <button
-          class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-xl text-sm font-medium transition-colors float-end ml-3"
-        >
-          <i class="fa fa-check mr-1"></i>
-          Inciar proceso
-        </button>
-      </div>
+  <!-- Documentos Adicionales -->
+  <div class="bg-white rounded-xl shadow-md p-6 card-hover transition-all">
+    <h2 class="font-bold text-lg mb-4 text-gray-700 flex items-center">
+      <i class="fas fa-file-alt mr-3 text-blue-500"></i> Documentos Adicionales
+    </h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <button class="document-btn">
+        <i class="fas fa-file-invoice-dollar text-green-500 mr-2"></i> Reporte
+        de Ingresos
+      </button>
+      <button class="document-btn">
+        <i class="fas fa-users text-blue-500 mr-2"></i> Reporte de Huéspedes
+      </button>
+      <button class="document-btn">
+        <i class="fas fa-bed text-purple-500 mr-2"></i> Ocupación por Habitación
+      </button>
     </div>
   </div>
 </main>

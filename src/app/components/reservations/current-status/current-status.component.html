@@ -93,41 +93,57 @@
         </tr>
       </thead>
       <tbody class="bg-white divide-y divide-gray-200">
-        <!-- Pay -->
-        <tr class="hover:bg-gray-50 transition-colors">
-          <td class="px-6 py-4 whitespace-nowrap">
-            <div class="text-sm font-medium text-blue-700">#22178945</div>
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap">
-            <div class="text-sm font-medium text-gray-900">María Rodríguez</div>
-            <div class="text-xs text-gray-500">Doble</div>
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">302</td>
-          <td class="px-6 py-4 whitespace-nowrap">
-            <span
-              class="px-2.5 py-1 text-xs rounded-full bg-green-50 text-green-600 flex items-center w-fit"
+        <ng-container>
+          <!-- Loading state -->
+          <tr>
+            <td colspan="6" class="text-center py-4">
+              <div class="flex justify-center items-center space-x-2">
+                <i class="fas fa-spinner fa-spin text-gray-400"></i>
+                <span class="text-gray-500">Cargando registros...</span>
+              </div>
+            </td>
+          </tr>
+        </ng-container>
+
+        <!-- Paid -->
+        <!-- <tr class="hover:bg-gray-50 transition-colors">
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm font-medium text-blue-700">#22178945</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm font-medium text-gray-900">
+                María Rodríguez
+              </div>
+              <div class="text-xs text-gray-500">Doble</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              302
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span
+                class="px-2.5 py-1 text-xs rounded-full bg-green-50 text-green-600 flex items-center w-fit"
+              >
+                <i class="fas fa-check-circle mr-1"></i> Pagado
+              </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-900">15/04/25</div>
+              <div class="text-sm text-gray-500">18/04/25</div>
+            </td>
+            <td
+              class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"
             >
-              <i class="fas fa-check-circle mr-1"></i> Pagado
-            </span>
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap">
-            <div class="text-sm text-gray-900">15/04/25</div>
-            <div class="text-sm text-gray-500">18/04/25</div>
-          </td>
-          <td
-            class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"
-          >
-            <button
-              class="text-blue-700 hover:text-emerald-800"
-              title="Esta reservación contiene una tarjeta de crédito virtual."
-            >
-              <i class="far fa-note-sticky"></i>
-            </button>
-          </td>
-        </tr>
+              <button
+                class="text-blue-700 hover:text-emerald-800"
+                title="Esta reservación contiene una tarjeta de crédito virtual."
+              >
+                <i class="far fa-note-sticky"></i>
+              </button>
+            </td>
+          </tr> -->
 
         <!-- Pending to pay  -->
-        <tr class="hover:bg-gray-50 transition-colors">
+        <!-- <tr class="hover:bg-gray-50 transition-colors">
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="text-sm font-medium text-blue-700">#128392</div>
           </td>
@@ -157,10 +173,10 @@
               <i class="far fa-note-sticky"></i>
             </button>
           </td>
-        </tr>
+        </tr> -->
 
         <!-- Check -->
-        <tr class="hover:bg-gray-50 transition-colors">
+        <!-- <tr class="hover:bg-gray-50 transition-colors">
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="text-sm font-medium text-blue-700">#127544</div>
           </td>
@@ -190,10 +206,10 @@
               <i class="fas fa-exclamation-circle"></i>
             </button>
           </td>
-        </tr>
+        </tr> -->
 
         <!-- Pre paid -->
-        <tr class="hover:bg-gray-50 transition-colors">
+        <!-- <tr class="hover:bg-gray-50 transition-colors">
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="text-sm font-medium text-blue-700">#127544</div>
           </td>
@@ -223,10 +239,10 @@
               <i class="far fa-credit-card"></i>
             </button>
           </td>
-        </tr>
+        </tr> -->
 
         <!-- Router -->
-        <tr class="hover:bg-gray-50 transition-colors">
+        <!-- <tr class="hover:bg-gray-50 transition-colors">
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="text-sm font-medium text-blue-700">#127544</div>
           </td>
@@ -257,10 +273,10 @@
               <i class="fa fa-sticky-note"></i>
             </button>
           </td>
-        </tr>
+        </tr> -->
 
         <!-- Not applicable -->
-        <tr class="hover:bg-gray-50 transition-colors">
+        <!-- <tr class="hover:bg-gray-50 transition-colors">
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="text-sm font-medium text-blue-700">#127544</div>
           </td>
@@ -291,10 +307,10 @@
               <i class="fa fa-sticky-note"></i>
             </button>
           </td>
-        </tr>
+        </tr> -->
 
         <!-- Routed -->
-        <tr class="hover:bg-gray-50 transition-colors">
+        <!-- <tr class="hover:bg-gray-50 transition-colors">
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="text-sm font-medium text-blue-700">#127544</div>
           </td>
@@ -325,7 +341,7 @@
               <i class="fa fa-sticky-note"></i>
             </button>
           </td>
-        </tr>
+        </tr> -->
       </tbody>
     </table>
   </div>
