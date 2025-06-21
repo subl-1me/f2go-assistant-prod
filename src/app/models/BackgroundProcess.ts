@@ -4,4 +4,7 @@ export default interface BackgroundProcess {
   progress: number;
   estimatedTime: number;
   status: string;
+  completedAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
