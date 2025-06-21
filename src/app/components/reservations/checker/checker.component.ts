@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { NgIf } from '@angular/common';
+import { CommonModule, NgIf } from '@angular/common';
 import Reservation from '../../../models/Reservation';
 import { FrontService } from '../../../services/front-service';
 import { environment } from '../../../../environment';
@@ -8,21 +8,30 @@ import {
   PAYLOAD_STATUS_NOSHOW,
   PAYLOAD_STATUS_CHOUT,
 } from '../../../const';
-import { HttpResponse } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
 
 const roomTypes = ['Double', 'Single', 'Suite'];
 
 @Component({
   selector: 'app-checker',
-  imports: [NgIf],
+  imports: [NgIf, FormsModule, CommonModule],
   templateUrl: './checker.component.html',
   styleUrl: './checker.component.css',
 })
 export class CheckerComponent {
-  public inHouseReservations: Reservation[] = [];
-  public isLoadingInHouseReservations: boolean = true;
+  public inHouseReservations: Reservation[];
+  public selectedReservations: Reservation[];
+  public isLoadingInHouseReservations: boolean;
+  public allSelected: boolean = false;
+  public searchTerm: string;
+  public showModal: boolean;
 
   constructor(private frontService: FrontService) {
+    this.inHouseReservations = [];
+    this.selectedReservations = [];
+    this.showModal = false;
+    this.isLoadingInHouseReservations = true;
+    this.searchTerm = '';
     this.getInHouseReservations();
   }
 
@@ -84,5 +93,32 @@ export class CheckerComponent {
           })
         );
       });
+  }
+
+  async confirmSelectedReservations() {
+    this.showModal = true;
+  }
+
+  filterReservations() {}
+
+  toggleSelectAll() {
+    if (this.allSelected) {
+      this.selectedReservations = [...this.inHouseReservations];
+    } else {
+      this.selectedReservations = [];
+    }
+
+    this.allSelected = !this.allSelected;
+  }
+
+  toggleSelect(reservation: Reservation) {
+    const index = this.selectedReservations.findIndex(
+      (res) => res.id === reservation.id
+    );
+    if (index > -1) {
+      this.selectedReservations.splice(index, 1);
+    } else {
+      this.selectedReservations.push(reservation);
+    }
   }
 }
