@@ -16,29 +16,7 @@ export class SidebarComponent {
     }, 2000);
   }
 
-  backgroundProcesses: BackgroundProcess[] = [
-    {
-      id: '1',
-      name: 'Revisión de reservaciones',
-      progress: 45,
-      estimatedTime: 120,
-      status: 'Procesando...',
-    },
-    {
-      id: '2',
-      name: 'Facturación automática',
-      progress: 80,
-      estimatedTime: 60,
-      status: 'Generando facturas',
-    },
-    {
-      id: '3',
-      name: 'Impresión de reportes',
-      progress: 100,
-      estimatedTime: 0,
-      status: 'Completado',
-    },
-  ];
+  backgroundProcesses: BackgroundProcess[] = [];
 
   updateProcesses() {
     this.backgroundProcesses = this.backgroundProcesses.map((process) => {
