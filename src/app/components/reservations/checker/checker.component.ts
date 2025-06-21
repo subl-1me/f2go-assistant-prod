@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { NgIf } from '@angular/common';
+import { CommonModule, NgIf } from '@angular/common';
 import Reservation from '../../../models/Reservation';
 import { FrontService } from '../../../services/front-service';
 import { environment } from '../../../../environment';
@@ -14,7 +14,7 @@ const roomTypes = ['Double', 'Single', 'Suite'];
 
 @Component({
   selector: 'app-checker',
-  imports: [NgIf, FormsModule],
+  imports: [NgIf, FormsModule, CommonModule],
   templateUrl: './checker.component.html',
   styleUrl: './checker.component.css',
 })
@@ -24,13 +24,15 @@ export class CheckerComponent {
   public isLoadingInHouseReservations: boolean;
   public allSelected: boolean = false;
   public searchTerm: string;
+  public showModal: boolean;
 
   constructor(private frontService: FrontService) {
     this.inHouseReservations = [];
     this.selectedReservations = [];
+    this.showModal = false;
     this.isLoadingInHouseReservations = true;
     this.searchTerm = '';
-    // this.getInHouseReservations();
+    this.getInHouseReservations();
   }
 
   async getInHouseReservations() {
@@ -94,8 +96,7 @@ export class CheckerComponent {
   }
 
   async confirmSelectedReservations() {
-    alert('Confirm?');
-    console.log(this.selectedReservations);
+    this.showModal = true;
   }
 
   filterReservations() {}
@@ -106,6 +107,8 @@ export class CheckerComponent {
     } else {
       this.selectedReservations = [];
     }
+
+    this.allSelected = !this.allSelected;
   }
 
   toggleSelect(reservation: Reservation) {
