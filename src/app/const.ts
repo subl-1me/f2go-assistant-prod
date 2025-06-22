@@ -8,3 +8,7 @@ export const PAYLOAD_STATUS_POST = 'POST';
 export const DEPARTURES_FILTER = 'departures';
 export const IN_HOUSE_FILTER = 'in-house';
 export const IN_CHECK_OUT_FILTER = 'CHOUT';
+
+// Default VCC data
+export const DEFAULT_VCC_PROVIDER = 'NONE';
+export const DEFAULT_VCC_TYPE = 'INVALID';

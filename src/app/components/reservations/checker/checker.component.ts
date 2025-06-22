@@ -9,6 +9,8 @@ import {
   PAYLOAD_STATUS_CHOUT,
 } from '../../../const';
 import { FormsModule } from '@angular/forms';
+import { CheckerService } from '../../../services/checker.service';
+import { BackgroundProcessServiceService } from '../../../services/background-process-service.service';
 
 const roomTypes = ['Double', 'Single', 'Suite'];
 
@@ -26,7 +28,11 @@ export class CheckerComponent {
   public searchTerm: string;
   public showModal: boolean;
 
-  constructor(private frontService: FrontService) {
+  constructor(
+    private frontService: FrontService,
+    private checkerService: CheckerService,
+    private backgroundProcessService: BackgroundProcessServiceService
+  ) {
     this.inHouseReservations = [];
     this.selectedReservations = [];
     this.showModal = false;
@@ -95,8 +101,16 @@ export class CheckerComponent {
       });
   }
 
-  async confirmSelectedReservations() {
+  async showConfirmationModal() {
     this.showModal = true;
+  }
+
+  async confirmChecker() {
+    this.backgroundProcessService.startProcess(
+      `Revisión de reservationes (${this.selectedReservations.length})`,
+      100
+    );
+    await this.checkerService.performChecker(this.selectedReservations);
   }
 
   filterReservations() {}
