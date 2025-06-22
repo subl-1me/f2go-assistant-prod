@@ -311,10 +311,7 @@ app.all("/proxy", async (req, res) => {
     if (contentType.includes("application/json")) {
       const jsonData = await response.json();
       console.log(jsonData);
-      res.status(response.status).json({
-        ...jsonData,
-        _proxyMetadata: { cookies, status: response.status }, // Metadata útil
-      });
+      res.status(response.status).json(jsonData);
     } else {
       if (response.body) {
         response.body.pipe(res);
