@@ -7,6 +7,9 @@ const { CookieJar } = require("tough-cookie"); // For cookie management
 const fetchBuilder = require("fetch-cookie").default; // For cookie handling with fetch
 const fetch = require("node-fetch"); // For making HTTP requests
 const url = require("url");
+const path = require("path");
+const { mkdirp } = require("mkdirp");
+const fs = require("fs");
 
 const app = express();
 app.use(
@@ -23,8 +26,15 @@ app.use((req, res, next) => {
 
   next();
 });
+app.use("/download", express.json());
 const PORT = 3000; // Port where your proxy server will listen
 const MAX_REDIRECTS = 5;
+const DOWNLOADED_DOCUMENTS_PATH = path.join(
+  __dirname,
+  "temp",
+  "downloaded-documents"
+);
+
 let redirectCount = 0; // Counter for redirects
 
 // --- Configuration ---
@@ -93,7 +103,10 @@ const fetchWithCookies = fetchBuilder(fetch, cookieJar);
 // Adjust limit as needed based on expected request sizes
 app.use(express.raw({ type: "*/*", limit: "10mb" }));
 
-// --- Proxy Route ---
+// proxy
+let agent = null;
+let usedProxy = null; // To log which proxy was used
+let cookiesArray = []; // array to hold cookies from responses
 
 // Handle all HTTP methods for the /proxy endpoint
 app.all("/proxy", async (req, res) => {
@@ -102,9 +115,6 @@ app.all("/proxy", async (req, res) => {
   if (!targetUrl) {
     return res.status(400).send('Error: Missing "url" query parameter.');
   }
-
-  let agent = null;
-  let usedProxy = null; // To log which proxy was used
 
   // Select the next proxy and create its agent
   const proxyUrl = getNextProxy();
@@ -167,7 +177,6 @@ app.all("/proxy", async (req, res) => {
   // --- Make the Request ---
   try {
     let response;
-    let cookiesArray = []; // array to hold cookies from responses
     while (redirectCount < MAX_REDIRECTS) {
       response = await fetchWithCookies(currentUrl, fetchOptions);
 
@@ -385,6 +394,77 @@ app.all("/proxy", async (req, res) => {
       // The response stream is likely broken. Log and terminate the connection.
       req.socket.destroy(); // Force close the connection.
     }
+  }
+});
+
+app.post("/download", express.json(), async (req, res) => {
+  const targetUrl = req.query.url;
+  console.log(
+    `[PROXY] Recieving a request to download a file: ${targetUrl} via ${usedProxy}`
+  );
+
+  if (!targetUrl) {
+    return res.status(400).send('Error: Missing "url" query parameter.');
+  }
+
+  // --- Make the Request ---
+  try {
+    const { fileName } = req.body;
+    console.log(fileName);
+    const fullPath = path.join(DOWNLOADED_DOCUMENTS_PATH, fileName + ".pdf");
+    const proxyUrl = getNextProxy();
+    const agent = proxyUrl ? createAgent(proxyUrl) : null;
+
+    await mkdirp(DOWNLOADED_DOCUMENTS_PATH);
+
+    // Configuración de la petición
+    const fetchOptions = {
+      method: "POST",
+      agent,
+      redirect: "follow",
+      timeout: 30000,
+    };
+
+    console.log(
+      `[DOWNLOAD] Starting download from ${targetUrl} to ${fullPath}`
+    );
+
+    const response = await fetchWithCookies(targetUrl, fetchOptions);
+    if (!response.ok) {
+      throw new Error(`Failed to download file: ${response.statusText}`);
+    }
+
+    const fileStream = fs.createWriteStream(fullPath);
+
+    // Pipe del body de la respuesta al archivo
+    response.body.pipe(fileStream);
+
+    // Manejar eventos del stream
+    return new Promise((resolve, reject) => {
+      fileStream.on("finish", () => {
+        console.log(`[DOWNLOAD] File saved successfully: ${fullPath}`);
+        res.json({
+          success: true,
+          path: fullPath,
+          size: fs.statSync(fullPath).size,
+        });
+        resolve();
+      });
+
+      fileStream.on("error", (err) => {
+        console.error(`[DOWNLOAD] Error saving file: ${err}`);
+        res
+          .status(500)
+          .json({ error: "Error saving file", details: err.message });
+        reject(err);
+      });
+    });
+  } catch (error) {
+    console.error(`[DOWNLOAD] Error downloading file: ${error}`);
+    res.status(500).json({
+      error: "Download failed",
+      details: error.message,
+    });
   }
 });
 

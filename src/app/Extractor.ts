@@ -66,4 +66,51 @@ export default class Extractor {
 
     return data;
   }
+
+  public extractBonvoyCertificateId(text: string): string | null {
+    console.log(text);
+    let certificate = null;
+    const certificateElementPattern = new RegExp(
+      `<label id="sCertificated"([\\s\\S\\t.]*?)>(.*)<\/label>`
+    );
+
+    const certificateMatch = text.match(certificateElementPattern);
+    if (certificateMatch) {
+      let elemResult = certificateMatch[0].match(/\d+/);
+      certificate = elemResult ? elemResult[0] : null;
+    }
+
+    return certificate;
+  }
+
+  public extractAttachedDocsData(text: string): any {
+    const validItems = [
+      'Cupón agencia de viajes',
+      'Carta garantía, cargo a tarjeta de crédito',
+      'Carta garantía de empresa',
+    ];
+
+    const tableDataPattern =
+      /<tr class="datosTabla">([\s\S\t.]*?)<\/tr>|<tr class="datosTablaAlter">([\s\S\t.]*?)<\/tr>/g;
+    const dataTables = text.match(tableDataPattern);
+    if (!dataTables) {
+      return [];
+    }
+
+    let docs: any[] = [];
+    dataTables.forEach((table) => {
+      const type = validItems.filter((item) => table.includes(item)).shift();
+      const docIdPattern = /fjsOpenDoc\('\d+'\)/;
+      const docIdMatch = table.match(docIdPattern);
+      if (docIdMatch) {
+        const id = (docIdMatch[0].match(/\d+/) || [null])[0];
+        docs.push({
+          id,
+          type,
+        });
+      }
+    });
+
+    return docs;
+  }
 }
