@@ -4,12 +4,19 @@ import { environment } from '../../../environment';
 import { FrontService } from '../front-service';
 import { HttpParams } from '@angular/common/http';
 import NotesByUser from '../../models/NotesByUser';
+import { lastValueFrom, map } from 'rxjs';
+import Extractor from '../../Extractor';
+import AttachedDocuments from '../../models/AttachedDocuments';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ReservationService {
-  constructor(private frontService: FrontService) {}
+  private extractor: Extractor;
+
+  constructor(private frontService: FrontService) {
+    this.extractor = new Extractor();
+  }
 
   public async getChinList(): Promise<Reservation[]> {
     return [];
@@ -65,5 +72,52 @@ export class ReservationService {
           );
         });
     });
+  }
+
+  public async getAttachedDocuments(
+    reservationId: string
+  ): Promise<AttachedDocuments[]> {
+    const params = new HttpParams()
+      .set('hdnVenClose', 'menu') // default
+      .set('reservacionid', reservationId)
+      .set('Hist', '0'); // default
+
+    try {
+      const response = await lastValueFrom(
+        this.frontService
+          .getRequest(environment.FRONT_API_GET_RSRV_ATTACHED_DOCS, params)
+          .pipe(
+            map((response) => {
+              console.log(response);
+              if (!response.rawData) {
+                return [];
+              }
+
+              const rawDocs = this.extractor.extractAttachedDocsData(
+                response.rawData
+              );
+              if (rawDocs.length === 0) {
+                return [];
+              }
+
+              return rawDocs.map((doc: any) => {
+                return {
+                  id: doc.id,
+                  type: doc.type,
+                  downloadUrl: environment.FRONT_API_DOC_DOWNLOAD_URL.replace(
+                    '{docIdField}',
+                    doc.id
+                  ).replace('{rsrvIdField}', reservationId),
+                };
+              });
+            })
+          )
+      );
+
+      return response;
+    } catch (err) {
+      console.log(err);
+      return [];
+    }
   }
 }
