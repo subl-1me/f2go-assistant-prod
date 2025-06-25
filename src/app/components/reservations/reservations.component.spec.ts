@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpTestingController } from '@angular/common/http/testing';
 import { ReservationsComponent } from './reservations.component';
 
 describe('ReservationsComponent', () => {
@@ -7,7 +8,7 @@ describe('ReservationsComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ReservationsComponent],
+      imports: [ReservationsComponent, HttpTestingController],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ReservationsComponent);

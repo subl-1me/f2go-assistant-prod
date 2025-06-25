@@ -69,4 +69,38 @@ export class FrontService {
       })
       .pipe(map(this.handleResponse.bind(this)));
   }
+
+  downloadFile(
+    fileUrl: string,
+    fileName: string,
+    requiresAuth?: boolean,
+    params?: HttpParams
+  ): Observable<any> {
+    return this.http
+      .post(
+        `${environment.proxy.replace('proxy', 'download')}`,
+        {
+          fileName,
+        },
+        {
+          observe: 'response',
+          responseType: 'json', // Asegúrate de que el servidor envíe HTML como texto
+          withCredentials: true,
+          headers: requiresAuth
+            ? new HttpHeaders({
+                Authorization: `Bearer ${
+                  localStorage.getItem('bearerToken') || ''
+                }`,
+                'Content-Type': 'application/json',
+              })
+            : new HttpHeaders({
+                'Content-Type': 'application/json',
+              }),
+          params: params
+            ? new HttpParams().set('url', `${fileUrl}?${params.toString()}`)
+            : new HttpParams().set('url', `${fileUrl}`),
+        }
+      )
+      .pipe(map(this.handleResponse.bind(this)));
+  }
 }

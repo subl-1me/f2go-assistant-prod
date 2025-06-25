@@ -24,12 +24,12 @@ export class PrepaidService {
 
   async getPrePaidMethod(reservationId: string): Promise<any> {
     // search for virtual card
-    const virtualCreditCard = await this.getVirtualCard(reservationId);
+    // const virtualCreditCard = await this.getVirtualCard(reservationId);
 
-    // search for certificate
-    const bonvoyCertificateId = await this.getBonvoyCertificateId(
-      reservationId
-    );
+    // // search for certificate
+    // const bonvoyCertificateId = await this.getBonvoyCertificateId(
+    //   reservationId
+    // );
 
     // search for coupons
     const coupons = await this.getCoupons(reservationId);
@@ -101,7 +101,11 @@ export class PrepaidService {
 
     // download each document & analyze them to determine which are coupons
     const downloadDocsPromises = attachedDocuments.map((document) =>
-      this.frontService.postRequest(document.downloadUrl)
+      // this.frontService.postRequest(document.downloadUrl)
+      this.frontService.downloadFile(
+        document.downloadUrl,
+        `${reservationId}-document-${new Date().getTime()}`
+      )
     );
 
     return await lastValueFrom(forkJoin(downloadDocsPromises));
