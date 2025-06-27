@@ -44,7 +44,6 @@ export class ReservationService {
       this.frontService
         .getRequest(environment.FRONT_API_GET_RSRV_NOTES, params)
         .subscribe((response) => {
-          console.log(response);
           if (response.status === 401) {
             reject('Authentication error. Please, log in again.');
           }
@@ -88,7 +87,6 @@ export class ReservationService {
           .getRequest(environment.FRONT_API_GET_RSRV_ATTACHED_DOCS, params)
           .pipe(
             map((response) => {
-              console.log(response);
               if (!response.rawData) {
                 return [];
               }
@@ -116,7 +114,6 @@ export class ReservationService {
 
       return response;
     } catch (err) {
-      console.log(err);
       return [];
     }
   }

@@ -86,7 +86,6 @@ export class LoginComponent {
       `let jsTques = "([\\s\\S\\t.]*?)"`
     );
     const match = rawData.match(BearerVarDeclarationPattern);
-    console.log(match);
     if (match && match[1]) {
       const bearerToken = match[1].trim();
       localStorage.setItem('bearerToken', bearerToken);

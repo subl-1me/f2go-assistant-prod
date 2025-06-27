@@ -55,7 +55,6 @@ export class LedgerService {
     return new Promise<Transaction[]>((resolve, reject) => {
       this.frontService.postRequest(API_URI).subscribe({
         next: (response) => {
-          console.log(response);
           if (response.status === 401) {
             reject('Authentication error.');
           } else {

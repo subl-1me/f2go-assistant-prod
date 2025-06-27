@@ -136,7 +136,6 @@ export class PrepaidService {
     const attachedDocuments: AttachedDocuments[] =
       await this.reservationService.getAttachedDocuments(reservationId);
 
-    console.log(attachedDocuments);
     if (attachedDocuments.length < 0) {
       return coupon;
     }

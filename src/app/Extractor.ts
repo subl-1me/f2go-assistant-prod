@@ -38,13 +38,10 @@ export default class Extractor {
           )
         )
       ) {
-        // match amount to charge
-
         const concatenatedNotes = notes.reduce((accum, current) => {
           return current + ' ' + accum;
         }, '');
 
-        console.log(concatenatedNotes);
         const chargeDeclarationMatch = concatenatedNotes.match(
           VCC_PROVIDERS_PATTERN_LIST[provider as keyof VCCProvidersPatterns]
             .AMOUNT_TO_CHARGE_DECLARATION
@@ -68,7 +65,6 @@ export default class Extractor {
   }
 
   public extractBonvoyCertificateId(text: string): string | null {
-    console.log(text);
     let certificate = null;
     const certificateElementPattern = new RegExp(
       `<label id="sCertificated"([\\s\\S\\t.]*?)>(.*)<\/label>`
