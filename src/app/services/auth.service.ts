@@ -35,6 +35,10 @@ export class AuthService {
     return login;
   }
 
+  public async logout() {
+    localStorage.clear();
+  }
+
   private async auth(formData: FormData): Promise<any> {
     return new Promise((resolve, reject) => {
       this.frontService

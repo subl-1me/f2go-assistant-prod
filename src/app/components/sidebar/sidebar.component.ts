@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import BackgroundProcess from '../../models/BackgroundProcess';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -10,7 +11,7 @@ import BackgroundProcess from '../../models/BackgroundProcess';
   styleUrl: './sidebar.component.css',
 })
 export class SidebarComponent {
-  constructor(private router: Router) {
+  constructor(private router: Router, private authService: AuthService) {
     setInterval(() => {
       this.updateProcesses();
     }, 2000);
@@ -52,11 +53,7 @@ export class SidebarComponent {
   }
 
   public logOut() {
-    localStorage.removeItem('bearerToken');
-    localStorage.removeItem('antiForgeryToken');
-    localStorage.removeItem('aspNetAuthToken');
-    localStorage.removeItem('mAutSessionToken');
-    localStorage.removeItem('verificationToken');
+    this.authService.logout();
     this.router.navigate(['/login']);
   }
 }
