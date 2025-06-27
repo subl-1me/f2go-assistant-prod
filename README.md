@@ -26,8 +26,8 @@ This application is built to automate and streamline daily operations based on d
 
 1.  Clone repo:
     ```bash
-        git clone https://github.com/subl-1me/auditor-auto-app
-        cd auditor-auto-app
+        git clone https://github.com/subl-1me/f2go-assistant-prod
+        cd f2go-assitant-prod
     ```
 2.  Install dependencies:
     ```bash
