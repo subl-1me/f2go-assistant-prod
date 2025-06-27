@@ -12,3 +12,12 @@ export const IN_CHECK_OUT_FILTER = 'CHOUT';
 // Default VCC data
 export const DEFAULT_VCC_PROVIDER = 'NONE';
 export const DEFAULT_VCC_TYPE = 'INVALID';
+
+// Default prepaid method data
+export const DEFAULT_PREPAID_TYPE = 'NONE';
+export const DEFAULT_PREPAID_PROVIDER = 'NO VALID PROVIDER FOUND';
+
+// Prepaid method names
+export const VIRTUAL_CREDIT_CARD = 'VIRTUAL CREDIT CARD';
+export const COUPON = 'COUPON';
+export const BONVOY_CERTIFICATE = 'BONVOY CERTICIATE';

@@ -1,6 +1,14 @@
 import { EnvironmentInjector, Injectable } from '@angular/core';
 import { VirtualCreditCard } from '../../models/VirtualCreditCard';
-import { DEFAULT_VCC_PROVIDER, DEFAULT_VCC_TYPE } from '../../const';
+import {
+  BONVOY_CERTIFICATE,
+  COUPON,
+  DEFAULT_PREPAID_PROVIDER,
+  DEFAULT_PREPAID_TYPE,
+  DEFAULT_VCC_PROVIDER,
+  DEFAULT_VCC_TYPE,
+  VIRTUAL_CREDIT_CARD,
+} from '../../const';
 import { ReservationService } from './reservation.service';
 import Extractor from '../../Extractor';
 import { FrontService } from '../front-service';
@@ -8,6 +16,9 @@ import { environment } from '../../../environment';
 import { HttpParams } from '@angular/common/http';
 import { catchError, forkJoin, lastValueFrom, map, Observable, of } from 'rxjs';
 import AttachedDocuments from '../../models/AttachedDocuments';
+import PrePaidMethod from '../../models/PrePaidMethod';
+import BonvoyCertificate from '../../models/BonvoyCertificate';
+import Coupon from '../../models/Coupon';
 
 @Injectable({
   providedIn: 'root',
@@ -22,19 +33,37 @@ export class PrepaidService {
     this.extractor = new Extractor();
   }
 
-  async getPrePaidMethod(reservationId: string): Promise<any> {
-    // search for virtual card
-    // const virtualCreditCard = await this.getVirtualCard(reservationId);
+  async getPrePaidMethod(reservationId: string): Promise<PrePaidMethod> {
+    let prepaidMethod: PrePaidMethod = {
+      type: DEFAULT_PREPAID_TYPE,
+      data: null,
+    };
 
-    // // search for certificate
-    // const bonvoyCertificateId = await this.getBonvoyCertificateId(
-    //   reservationId
-    // );
+    const [virtualCreditCard, bonvoyCertificate, coupon] = await Promise.all([
+      this.getVirtualCard(reservationId),
+      this.getBonvoyCertificateId(reservationId),
+      this.getCoupon(reservationId),
+    ]);
 
-    // search for coupons
-    const coupons = await this.getCoupons(reservationId);
-    console.log(coupons);
-    return;
+    if (
+      virtualCreditCard.type !== DEFAULT_VCC_PROVIDER &&
+      virtualCreditCard.isValid
+    ) {
+      prepaidMethod.data = virtualCreditCard;
+      prepaidMethod.type = VIRTUAL_CREDIT_CARD;
+    }
+
+    if (typeof bonvoyCertificate === 'string') {
+      prepaidMethod.data = bonvoyCertificate;
+      prepaidMethod.type = BONVOY_CERTIFICATE;
+    }
+
+    if (coupon.isValid && coupon.provider !== DEFAULT_PREPAID_PROVIDER) {
+      prepaidMethod.data = coupon;
+      prepaidMethod.type = COUPON;
+    }
+
+    return prepaidMethod;
   }
 
   private async getVirtualCard(
@@ -63,7 +92,12 @@ export class PrepaidService {
 
   private async getBonvoyCertificateId(
     reservationId: string
-  ): Promise<string | null> {
+  ): Promise<BonvoyCertificate> {
+    let bonvoyCertificate: BonvoyCertificate = {
+      sourceReservation: reservationId,
+      code: null,
+    };
+
     const params = new HttpParams()
       .set('guestId', reservationId)
       .set('propcode', environment.PROP_NAME);
@@ -83,20 +117,28 @@ export class PrepaidService {
             })
           )
       );
-      return response;
+      bonvoyCertificate.code = response;
+      return bonvoyCertificate;
     } catch (err) {
-      console.log(err);
-      return null;
+      return bonvoyCertificate;
     }
   }
 
-  private async getCoupons(reservationId: string): Promise<any> {
+  private async getCoupon(reservationId: string): Promise<Coupon> {
+    let coupon: Coupon = {
+      id: null,
+      sourceReservation: reservationId,
+      filePath: '',
+      provider: DEFAULT_PREPAID_PROVIDER,
+      isValid: false,
+    };
+
     const attachedDocuments: AttachedDocuments[] =
       await this.reservationService.getAttachedDocuments(reservationId);
 
     console.log(attachedDocuments);
     if (attachedDocuments.length < 0) {
-      return [];
+      return coupon;
     }
 
     // download each document & analyze them to determine which are coupons
@@ -108,6 +150,8 @@ export class PrepaidService {
       )
     );
 
-    return await lastValueFrom(forkJoin(downloadDocsPromises));
+    coupon.isValid = true;
+    return coupon;
+    // return await lastValueFrom(forkJoin(downloadDocsPromises));
   }
 }

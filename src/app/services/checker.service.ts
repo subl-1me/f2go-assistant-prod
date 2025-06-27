@@ -22,21 +22,21 @@ export class CheckerService {
 
   private async collectReservationData(reservation: Reservation): Promise<any> {
     // load reservation ledgers
-    // const ledgers = await this.ledgerService.getReservationledger(
-    //   reservation.id
-    // );
-    // reservation.ledgers = ledgers;
+    const ledgers = await this.ledgerService.getReservationledger(
+      reservation.id
+    );
+    reservation.ledgers = ledgers;
 
     // // load ledgers transactions
-    // const ledgerTransactionsPromises = ledgers.map((ledger) => {
-    //   return this.ledgerService.getLedgerTransactions(ledger);
-    // });
+    const ledgerTransactionsPromises = ledgers.map((ledger) => {
+      return this.ledgerService.getLedgerTransactions(ledger);
+    });
 
     // // load transaction for each ledger
-    // const transactions = await Promise.all(ledgerTransactionsPromises);
-    // reservation.ledgers.forEach((ledger, index) => {
-    //   ledger.transactions = transactions[index];
-    // });
+    const transactions = await Promise.all(ledgerTransactionsPromises);
+    reservation.ledgers.forEach((ledger, index) => {
+      ledger.transactions = transactions[index];
+    });
 
     // search for pre-paid method
     const prePaidMethod = await this.prePaidService.getPrePaidMethod(
