@@ -10,6 +10,8 @@ const url = require("url");
 const path = require("path");
 const { mkdirp } = require("mkdirp");
 const fs = require("fs");
+const pdf = require("pdf-parse");
+const { v4 } = require("uuid");
 
 const app = express();
 app.use(
@@ -27,6 +29,7 @@ app.use((req, res, next) => {
   next();
 });
 app.use("/download", express.json());
+app.use("/extract-pdf-text", express.json());
 const PORT = 3000; // Port where your proxy server will listen
 const MAX_REDIRECTS = 5;
 const DOWNLOADED_DOCUMENTS_PATH = path.join(
@@ -410,8 +413,10 @@ app.post("/download", express.json(), async (req, res) => {
   // --- Make the Request ---
   try {
     const { fileName } = req.body;
-    console.log(fileName);
-    const fullPath = path.join(DOWNLOADED_DOCUMENTS_PATH, fileName + ".pdf");
+    const fullPath = path.join(
+      DOWNLOADED_DOCUMENTS_PATH,
+      fileName + v4() + ".pdf"
+    );
     const proxyUrl = getNextProxy();
     const agent = proxyUrl ? createAgent(proxyUrl) : null;
 
@@ -430,6 +435,7 @@ app.post("/download", express.json(), async (req, res) => {
     );
 
     const response = await fetchWithCookies(targetUrl, fetchOptions);
+
     if (!response.ok) {
       throw new Error(`Failed to download file: ${response.statusText}`);
     }
@@ -465,6 +471,17 @@ app.post("/download", express.json(), async (req, res) => {
       error: "Download failed",
       details: error.message,
     });
+  }
+});
+
+app.post("/extract-pdf-text", express.json(), async (req, res) => {
+  try {
+    const { path } = req.body;
+    const pdfBuffer = fs.readFileSync(path);
+    const data = await pdf(pdfBuffer);
+    return res.send({ status: 200, text: data.text });
+  } catch (err) {
+    return res.send({ status: 500, message: `Unexpected error: ${err}` });
   }
 });
 

@@ -27,12 +27,12 @@ export class CheckerService {
     );
     reservation.ledgers = ledgers;
 
-    // // load ledgers transactions
+    // load ledgers transactions
     const ledgerTransactionsPromises = ledgers.map((ledger) => {
       return this.ledgerService.getLedgerTransactions(ledger);
     });
 
-    // // load transaction for each ledger
+    // load transaction for each ledger
     const transactions = await Promise.all(ledgerTransactionsPromises);
     reservation.ledgers.forEach((ledger, index) => {
       ledger.transactions = transactions[index];
@@ -42,5 +42,10 @@ export class CheckerService {
     const prePaidMethod = await this.prePaidService.getPrePaidMethod(
       reservation.id
     );
+
+    return {
+      ledgers,
+      prePaidMethod,
+    };
   }
 }

@@ -1,3 +1,5 @@
+import CouponsProvidersPatterns from './models/CouponsProvidersPatterns';
+
 export const VCC_PROVIDERS_PATTERN_LIST = {
   BOOKING: {
     USE_DECLARATION: /VIRTUAL CREDIT CARD/,
@@ -18,5 +20,53 @@ export const VCC_PROVIDERS_PATTERN_LIST = {
     USE_DECLARATION: /VIRTUAL CREDIT CARD/,
     AMOUNT_TO_CHARGE_DECLARATION: /\d+\.\d+|\d+/,
     AMOUNT: /\d+\.\d+|\d+/,
+  },
+};
+
+export const COUPONS_PROVIDERS_PATTERNS: CouponsProvidersPatterns = {
+  CORPORATE_TRAVEL_SERVICES: {
+    SIGNATURE: /CORPORATETRAVELSERVICESWORLDWIDESAPIDE/,
+    TARGET_HOTEL: /CITYEXPRESSBYMARRIOTTCIUDADJUAREZ/,
+    GUEST_NAME: /TITULAR\n.*/,
+    CHECK_IN: /FECHADEENTRADA:\d+\/\d+\/\d+/,
+    CHECK_OUT: /FECHADESALIDA:\d+\/\d+\/\d+/,
+    RESERVATION_ID_TARGET: /CLAVE\d{8}/,
+    INVOICE_RFC_TARGET:
+      /[a-zA-Z0-9]{3}\d{7}[a-zA-Z0-9]{1}\d{1}|[a-zA-Z0-9]{3}\d{6}[a-zA-Z0-9]{2}\d{1}|[a-zA-Z0-9]{3}\d{6}[a-zA-Z0-9]{1}\d{2}|[a-zA-Z0-9]{3}\d{7}[a-zA-Z0-9]{2}|[a-zA-Z0-9]{3}\d{6}[a-zA-Z0-9]{3}/,
+    INVOICE_EMAIL_TARGET: /[\w.-]+@[\w.-]+\.\w{2,}/g,
+  },
+  BAUSER: {
+    SIGNATURE: /BAUSER/,
+    TARGET_HOTEL: /CITYEXPRESSBYMARRIOTTCIUDADJUAREZ/,
+    GUEST_NAME: /Titular\n.*/,
+    CHECK_IN: /FECHADEENTRADA:\d+\/\d+\/\d+/,
+    CHECK_OUT: /FECHADESALIDA:\d+\/\d+\/\d+/,
+    RESERVATION_ID_TARGET: /Clave\d{8}/,
+    INVOICE_RFC_TARGET:
+      /[a-zA-Z0-9]{3}\d{7}[a-zA-Z0-9]{1}\d{1}|[a-zA-Z0-9]{3}\d{6}[a-zA-Z0-9]{2}\d{1}|[a-zA-Z0-9]{3}\d{6}[a-zA-Z0-9]{1}\d{2}|[a-zA-Z0-9]{3}\d{7}[a-zA-Z0-9]{2}|[a-zA-Z0-9]{3}\d{6}[a-zA-Z0-9]{3}/,
+    INVOICE_EMAIL_TARGET: /[\w.-]+@[\w.-]+\.\w{2,}/g,
+  },
+  VIAJES_EL_CORTE_INGLES: {
+    SIGNATURE: /VIAJESELCORTEINGLES/,
+    TARGET_HOTEL: /CITYEXPRESSBYMARRIOTTCIUDADJUAREZ/,
+    GUEST_NAME: /Titular\n.*/,
+    CHECK_IN: /FECHADEENTRADA:\d+\/\d+\/\d+/,
+    CHECK_OUT: /FECHADESALIDA:\d+\/\d+\/\d+/,
+    RESERVATION_ID_TARGET: /Clave\d{8}/,
+    INVOICE_RFC_TARGET:
+      /[a-zA-Z0-9]{3}\d{7}[a-zA-Z0-9]{1}\d{1}|[a-zA-Z0-9]{3}\d{6}[a-zA-Z0-9]{2}\d{1}|[a-zA-Z0-9]{3}\d{6}[a-zA-Z0-9]{1}\d{2}|[a-zA-Z0-9]{3}\d{7}[a-zA-Z0-9]{2}|[a-zA-Z0-9]{3}\d{6}[a-zA-Z0-9]{3}/,
+    INVOICE_EMAIL_TARGET: /[\w.-]+@[\w.-]+\.\w{2,}/g,
+  },
+  CITY_ACCESS: {
+    SIGNATURE: /CUPÓN ACCESS/,
+    TARGET_HOTEL: /HOTEL\n.*/,
+    GUEST_NAME: /NOMBRE DEL HUÉSPED\n.*/,
+    CHECK_IN: /FECHA DE ENTRADA\n.*/,
+    CHECK_OUT: /FECHA DE SALIDA\n.*/,
+    RESERVATION_ID_TARGET: /CLAVE DE CONFIRMACIÓN\n.*/,
+    INVOICE_RFC_TARGET:
+      /[a-zA-Z0-9]{3}\d{7}[a-zA-Z0-9]{1}\d{1}|[a-zA-Z0-9]{3}\d{6}[a-zA-Z0-9]{2}\d{1}|[a-zA-Z0-9]{3}\d{6}[a-zA-Z0-9]{1}\d{2}|[a-zA-Z0-9]{3}\d{7}[a-zA-Z0-9]{2}|[a-zA-Z0-9]{3}\d{6}[a-zA-Z0-9]{3}/,
+    INVOICE_EMAIL_TARGET: /[\w.-]+@[\w.-]+\.\w{2,}/g,
+    BASE_RATE: /TARIFA\d.*/,
   },
 };
