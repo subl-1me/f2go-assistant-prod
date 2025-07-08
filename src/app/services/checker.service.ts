@@ -42,5 +42,10 @@ export class CheckerService {
     const prePaidMethod = await this.prePaidService.getPrePaidMethod(
       reservation.id
     );
+
+    return {
+      ledgers,
+      prePaidMethod,
+    };
   }
 }

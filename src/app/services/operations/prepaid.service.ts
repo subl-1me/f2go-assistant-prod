@@ -14,7 +14,8 @@ import Extractor from '../../Extractor';
 import { FrontService } from '../front-service';
 import { environment } from '../../../environment';
 import { HttpParams } from '@angular/common/http';
-import { catchError, forkJoin, lastValueFrom, map, Observable, of } from 'rxjs';
+import { lastValueFrom, map, forkJoin } from 'rxjs';
+import { DocumentAnalyzerService } from '../document-analyzer.service';
 import AttachedDocuments from '../../models/AttachedDocuments';
 import PrePaidMethod from '../../models/PrePaidMethod';
 import BonvoyCertificate from '../../models/BonvoyCertificate';
@@ -28,7 +29,8 @@ export class PrepaidService {
 
   constructor(
     private reservationService: ReservationService,
-    private frontService: FrontService
+    private frontService: FrontService,
+    private documentAnalyzerService: DocumentAnalyzerService
   ) {
     this.extractor = new Extractor();
   }
@@ -148,6 +150,18 @@ export class PrepaidService {
         `${reservationId}-document-${new Date().getTime()}`
       )
     );
+
+    const downloads = await lastValueFrom(forkJoin(downloadDocsPromises));
+    console.log(downloads);
+    const success = downloads.filter((download) => download.success);
+
+    // analyze each document
+    const analyzerPromises = success.map((document) =>
+      this.documentAnalyzerService.analyze(document.path)
+    );
+
+    const analyzerResponses = await Promise.all(analyzerPromises);
+    console.log(analyzerResponses);
 
     coupon.isValid = true;
     return coupon;
