@@ -1,4 +1,4 @@
-<div class="reservations-table-container">
+<div class="reservations-table-container" *ngIf="!isChecking">
   <!-- Filtros -->
   <div class="mb-6 bg-gray-50 p-4 rounded-lg">
     <div class="grid grid-cols-2 md:grid-cols-2 gap-4 p-3">
@@ -26,7 +26,7 @@
         <input
           type="text"
           [(ngModel)]="searchTerm"
-          (input)="filterReservations()"
+          (keyup)="filterReservations()"
           placeholder="Buscar huésped, reserva, habitación.."
           class="pl-10 w-full rounded-lg border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
         />
@@ -99,7 +99,7 @@
 
           <ng-container *ngIf="!isLoadingInHouseReservations">
             <!-- Pay -->
-            @for (reservation of inHouseReservations; track reservation.id){
+            @for (reservation of displaydReservations; track reservation.id){
             <tr class="hover:bg-gray-50 transition-colors">
               <td class="px-6 py-4 whitespace-nowrap">
                 <input
@@ -436,7 +436,7 @@
     >
       <div class="text-sm text-gray-500">
         Mostrando
-        <span class="font-medium">{{ inHouseReservations.length }} </span>
+        <span class="font-medium">{{ displaydReservations.length }} </span>
         reservaciones
       </div>
       <div class="flex space-x-2">
@@ -556,4 +556,23 @@
       </div>
     </div>
   </div>
+</div>
+
+<!-- Spinner while checking -->
+<div
+  class="in-progress-message text-center p-4 bg-gray-100 rounded-lg"
+  *ngIf="isChecking"
+>
+  <div class="spinner mb-2 mx-auto"></div>
+  <h1 class="font-medium mb-2">
+    Hay una revisión en curso. Espera a que finalice o cancela el proceso
+    actual.
+  </h1>
+  <button
+    class="text-red-700 rounded-full hover:text-red-300"
+    type="submit"
+    (click)="cancelOperation()"
+  >
+    Cancelar
+  </button>
 </div>

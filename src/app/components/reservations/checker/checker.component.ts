@@ -22,11 +22,13 @@ const roomTypes = ['Double', 'Single', 'Suite'];
 })
 export class CheckerComponent {
   public inHouseReservations: Reservation[];
+  public displaydReservations: Reservation[];
   public selectedReservations: Reservation[];
   public isLoadingInHouseReservations: boolean;
   public allSelected: boolean = false;
   public searchTerm: string;
   public showModal: boolean;
+  public isChecking: boolean;
 
   constructor(
     private frontService: FrontService,
@@ -38,7 +40,9 @@ export class CheckerComponent {
     this.showModal = false;
     this.isLoadingInHouseReservations = true;
     this.searchTerm = '';
+    this.displaydReservations = [];
     this.getInHouseReservations();
+    this.isChecking = false;
   }
 
   async getInHouseReservations() {
@@ -98,6 +102,8 @@ export class CheckerComponent {
             };
           })
         );
+
+        this.displaydReservations = [...this.inHouseReservations];
       });
   }
 
@@ -106,14 +112,39 @@ export class CheckerComponent {
   }
 
   async confirmChecker() {
+    this.isChecking = true;
+    this.showModal = false;
     this.backgroundProcessService.startProcess(
       `Revisión de reservationes (${this.selectedReservations.length})`,
       100
     );
-    await this.checkerService.performChecker(this.selectedReservations);
+    const checkerResponse = await this.checkerService.performChecker(
+      this.selectedReservations
+    );
+
+    console.log(checkerResponse);
+
+    this.isChecking = false;
   }
 
-  filterReservations() {}
+  async cancelOperation() {
+    this.isChecking = false;
+  }
+
+  filterReservations() {
+    if (!this.searchTerm || this.searchTerm.trim() === '') {
+      this.displaydReservations = [...this.inHouseReservations];
+      return;
+    }
+
+    const searchTermLower = this.searchTerm.toLowerCase();
+    this.displaydReservations = this.inHouseReservations.filter(
+      (reservation) =>
+        reservation.guestName.toLowerCase().includes(searchTermLower) ||
+        reservation.id.toLowerCase().includes(searchTermLower) ||
+        reservation.room.toLowerCase().includes(searchTermLower)
+    );
+  }
 
   toggleSelectAll() {
     if (this.allSelected) {
