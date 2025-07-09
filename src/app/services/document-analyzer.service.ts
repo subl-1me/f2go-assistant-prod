@@ -70,6 +70,9 @@ export class DocumentAnalyzerService {
           case 'CITY_ACCESS':
             extraction = this.extractCityAcessData(text);
             return { provider, extraction };
+          case 'GBT_TRAVEL_SERVICES':
+            extraction = this.extractGBTData(text);
+            return { provider, extraction };
           default:
             console.log(`Invalid coupon provider signature: ${provider}`);
             break;
@@ -85,15 +88,16 @@ export class DocumentAnalyzerService {
     const getTargetHotelSimilarity = () => {
       const targetMatch = text.match(CORPORATE_TRAVEL_SERVICES.TARGET_HOTEL);
       if (targetMatch) {
-        const normalizedTarget = targetMatch[0]
-          .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2')
-          .replace(/\s+/g, ' ')
-          .trim()
-          .toUpperCase();
+        return targetMatch[0];
+        // const normalizedTarget = targetMatch[0]
+        //   .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2')
+        //   .replace(/\s+/g, ' ')
+        //   .trim()
+        //   .toUpperCase();
 
-        const similarity =
-          normalizedTarget === targetMatch[0].toUpperCase() ? 1 : 0.8;
-        return similarity;
+        // const similarity =
+        //   normalizedTarget === targetMatch[0].toUpperCase() ? 1 : 0.8;
+        // return similarity;
       }
 
       return 0;
@@ -102,17 +106,7 @@ export class DocumentAnalyzerService {
     const getGuestNameSimilarity = () => {
       const guestNameMatch = text.match(CORPORATE_TRAVEL_SERVICES.GUEST_NAME);
       if (guestNameMatch) {
-        const guestName = guestNameMatch[0].replace('Titular', '').trim();
-
-        const normalizedTarget = guestNameMatch[0]
-          .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2')
-          .replace(/\s+/g, ' ')
-          .trim()
-          .toUpperCase();
-
-        const similarity =
-          normalizedTarget === guestName.toUpperCase() ? 1 : 0.8;
-        return similarity;
+        return guestNameMatch[0];
       }
 
       return 0;
@@ -250,6 +244,66 @@ export class DocumentAnalyzerService {
       guestName: getGuestName(),
       checkIn: getCheckInDate(),
       checkOut: getCheckOutDate(),
+      reservationIdtarget: getReservationIdTarget(),
+      fiscalCodeTarget: getInvoiceRFCTarget(),
+      fiscalEmailTargets: getInvoiceEmails(),
+    };
+  }
+
+  private extractGBTData(text: string): any {
+    const { GBT_TRAVEL_SERVICES } = COUPONS_PROVIDERS_PATTERNS;
+    const getTargetHotel = () => {
+      const match = text.match(GBT_TRAVEL_SERVICES.TARGET_HOTEL);
+      if (match) {
+        return match[0].trim();
+      }
+      return '';
+    };
+
+    const getGuestName = () => {
+      const match = text.match(GBT_TRAVEL_SERVICES.GUEST_NAME);
+      if (match) {
+        return match[1].trim();
+      }
+      return '';
+    };
+
+    const getCheckInDate = () => {
+      const match = text.match(GBT_TRAVEL_SERVICES.CHECK_IN);
+      if (match) {
+        return match;
+      }
+      return '';
+    };
+
+    const getReservationIdTarget = () => {
+      const match = text.match(GBT_TRAVEL_SERVICES.RESERVATION_ID_TARGET);
+      if (match) {
+        return match;
+      }
+      return '';
+    };
+
+    const getInvoiceRFCTarget = () => {
+      const match = text.match(GBT_TRAVEL_SERVICES.INVOICE_RFC_TARGET);
+      if (match) {
+        return match[0];
+      }
+      return '';
+    };
+
+    const getInvoiceEmails = () => {
+      const match = text.match(GBT_TRAVEL_SERVICES.INVOICE_EMAIL_TARGET);
+      if (match) {
+        return match;
+      }
+      return '';
+    };
+
+    return {
+      targetHotel: getTargetHotel(),
+      guestName: getGuestName(),
+      checkIn: getCheckInDate(),
       reservationIdtarget: getReservationIdTarget(),
       fiscalCodeTarget: getInvoiceRFCTarget(),
       fiscalEmailTargets: getInvoiceEmails(),

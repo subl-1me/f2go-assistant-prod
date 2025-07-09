@@ -35,6 +35,16 @@ export const COUPONS_PROVIDERS_PATTERNS: CouponsProvidersPatterns = {
       /[a-zA-Z0-9]{3}\d{7}[a-zA-Z0-9]{1}\d{1}|[a-zA-Z0-9]{3}\d{6}[a-zA-Z0-9]{2}\d{1}|[a-zA-Z0-9]{3}\d{6}[a-zA-Z0-9]{1}\d{2}|[a-zA-Z0-9]{3}\d{7}[a-zA-Z0-9]{2}|[a-zA-Z0-9]{3}\d{6}[a-zA-Z0-9]{3}/,
     INVOICE_EMAIL_TARGET: /[\w.-]+@[\w.-]+\.\w{2,}/g,
   },
+  GBT_TRAVEL_SERVICES: {
+    SIGNATURE: /GBT TRAVEL SERVICES MEXICO/,
+    TARGET_HOTEL: /CITY EXPRESS CIUDAD JUAREZ/,
+    GUEST_NAME: /^(.+?)\s*DATE ISSUED/,
+    CHECK_IN: /\d{2}-.{3}-\d{4}/g,
+    CHECK_OUT: /\d{2}-.{3}-\d{4}/,
+    RESERVATION_ID_TARGET: /\d{8}/,
+    INVOICE_RFC_TARGET: /.{3}-\d{6}-.{2}\d{1}/,
+    INVOICE_EMAIL_TARGET: /[\w.-]+@[\w.-]+\.\w{2,}/g,
+  },
   BAUSER: {
     SIGNATURE: /BAUSER/,
     TARGET_HOTEL: /CITYEXPRESSBYMARRIOTTCIUDADJUAREZ/,

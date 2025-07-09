@@ -1,5 +1,6 @@
 export default interface CouponsProvidersPatterns {
   CORPORATE_TRAVEL_SERVICES: Patterns;
+  GBT_TRAVEL_SERVICES: Patterns;
   VIAJES_EL_CORTE_INGLES: Patterns;
   BAUSER: Patterns;
   CITY_ACCESS: Patterns;
@@ -11,6 +12,7 @@ interface Patterns {
   GUEST_NAME: RegExp;
   CHECK_IN: RegExp;
   CHECK_OUT: RegExp;
+  DATES?: RegExp;
   RESERVATION_ID_TARGET: RegExp;
   INVOICE_RFC_TARGET: RegExp;
   INVOICE_EMAIL_TARGET: RegExp;
