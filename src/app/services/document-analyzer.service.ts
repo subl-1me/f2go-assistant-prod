@@ -51,6 +51,7 @@ export class DocumentAnalyzerService {
   }
 
   private classify(text: string): any {
+    console.log(text);
     const couponProvidersNames = Object.keys(COUPONS_PROVIDERS_PATTERNS);
     for (const provider of couponProvidersNames) {
       const signature = text.match(

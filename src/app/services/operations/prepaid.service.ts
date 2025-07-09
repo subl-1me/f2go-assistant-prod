@@ -152,7 +152,6 @@ export class PrepaidService {
     );
 
     const downloads = await lastValueFrom(forkJoin(downloadDocsPromises));
-    console.log(downloads);
     const success = downloads.filter((download) => download.success);
 
     // analyze each document
@@ -161,10 +160,11 @@ export class PrepaidService {
     );
 
     const analyzerResponses = await Promise.all(analyzerPromises);
-    console.log(analyzerResponses);
-
     coupon.isValid = true;
+    coupon.provider = analyzerResponses[0].classification.provider;
+    coupon.analysis = analyzerResponses[0];
     return coupon;
+
     // return await lastValueFrom(forkJoin(downloadDocsPromises));
   }
 }
