@@ -77,6 +77,6 @@ export const COUPONS_PROVIDERS_PATTERNS: CouponsProvidersPatterns = {
     INVOICE_RFC_TARGET:
       /[a-zA-Z0-9]{3}\d{7}[a-zA-Z0-9]{1}\d{1}|[a-zA-Z0-9]{3}\d{6}[a-zA-Z0-9]{2}\d{1}|[a-zA-Z0-9]{3}\d{6}[a-zA-Z0-9]{1}\d{2}|[a-zA-Z0-9]{3}\d{7}[a-zA-Z0-9]{2}|[a-zA-Z0-9]{3}\d{6}[a-zA-Z0-9]{3}/,
     INVOICE_EMAIL_TARGET: /[\w.-]+@[\w.-]+\.\w{2,}/g,
-    BASE_RATE: /TARIFA\d.*/,
+    BASE_RATE: /TARIFA\n.*/,
   },
 };

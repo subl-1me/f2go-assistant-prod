@@ -239,11 +239,30 @@ export class DocumentAnalyzerService {
       return '';
     };
 
+    const getTotalToPay = () => {
+      if (!CITY_ACCESS.BASE_RATE) {
+        return '';
+      }
+
+      const match = text.match(CITY_ACCESS.BASE_RATE);
+      if (match) {
+        return Number(
+          match[0]
+            .replace('TARIFA', '')
+            .replace('$', '')
+            .replace(',', '')
+            .trim()
+        );
+      }
+      return '';
+    };
+
     return {
       targetHotel: getTargetHotel(),
       guestName: getGuestName(),
       checkIn: getCheckInDate(),
       checkOut: getCheckOutDate(),
+      totalToPay: getTotalToPay(),
       reservationIdtarget: getReservationIdTarget(),
       fiscalCodeTarget: getInvoiceRFCTarget(),
       fiscalEmailTargets: getInvoiceEmails(),
