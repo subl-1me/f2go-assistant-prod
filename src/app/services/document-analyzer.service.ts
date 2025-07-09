@@ -9,6 +9,7 @@ import {
   DOCUMENT_TYPE_RFC,
   DOCUMENT_TYPE_UNSUPORTED,
 } from '../const';
+import CouponExtraction from '../models/CouponExtraction';
 
 @Injectable({
   providedIn: 'root',
@@ -106,23 +107,26 @@ export class DocumentAnalyzerService {
 
   private startCouponExtractionProcess(provider: string, text: string): any {
     let extraction: any = null;
+
     switch (provider) {
       case 'CORPORATE_TRAVEL_SERVICES':
         extraction = this.extractCTSData(text);
-        return { provider, extraction };
+        break;
       case 'CITY_ACCESS':
         extraction = this.extractCityAcessData(text);
-        return { provider, extraction };
+        break;
       case 'GBT_TRAVEL_SERVICES':
         extraction = this.extractGBTData(text);
-        return { provider, extraction };
+        break;
       default:
         console.log(`Invalid coupon provider signature: ${provider}`);
         break;
     }
+
+    return { provider, extraction };
   }
 
-  private extractCTSData(text: string): any {
+  private extractCTSData(text: string): CouponExtraction {
     const { CORPORATE_TRAVEL_SERVICES } = COUPONS_PROVIDERS_PATTERNS;
     const getTargetHotelName = () => {
       const targetMatch = text.match(CORPORATE_TRAVEL_SERVICES.TARGET_HOTEL);
@@ -139,7 +143,7 @@ export class DocumentAnalyzerService {
         // return similarity;
       }
 
-      return 0;
+      return '';
     };
 
     const getTargetGuestName = () => {
@@ -148,7 +152,7 @@ export class DocumentAnalyzerService {
         return guestNameMatch[0];
       }
 
-      return 0;
+      return '';
     };
 
     const getCheckInDates = () => {
@@ -175,11 +179,11 @@ export class DocumentAnalyzerService {
       );
       if (reservationIdMatch) {
         const matchResult = reservationIdMatch[0].match(/\d{8}/);
-        const reservationIdTarget = matchResult ? matchResult[0] : null;
+        const reservationIdTarget = matchResult ? matchResult[0] : '';
         return reservationIdTarget;
       }
 
-      return null;
+      return '';
     };
 
     const getInvoiceRFCTarget = () => {
@@ -201,21 +205,22 @@ export class DocumentAnalyzerService {
         return emailTargetMatch;
       }
 
-      return '';
+      return [];
     };
 
     return {
-      targetHotelSimilarity: getTargetHotelName(),
-      guestNameSimilarity: getTargetGuestName(),
-      checkInDates: getCheckInDates(),
-      checkOutDates: getCheckOutDates(),
-      reservationIdTarget: getReservationIdTarget(),
-      fiscalCodeTarget: getInvoiceRFCTarget(),
-      fiscalEmailTargets: getInvoiceEmailTarget(),
-    };
+      targetHotel: getTargetHotelName(),
+      guestName: getTargetGuestName(),
+      checkInDate: getCheckInDates(),
+      checkOutDate: getCheckOutDates(),
+      targetReservationId: getReservationIdTarget(),
+      invoiceFiscalCodeTarget: getInvoiceRFCTarget(),
+      invoiceEmailTarget: getInvoiceEmailTarget(),
+      totalToPay: 0, // Not available in CTS data
+    } as CouponExtraction;
   }
 
-  private extractCityAcessData(text: string): any {
+  private extractCityAcessData(text: string): CouponExtraction {
     const { CITY_ACCESS } = COUPONS_PROVIDERS_PATTERNS;
     const getTargetHotel = () => {
       const match = text.match(CITY_ACCESS.TARGET_HOTEL);
@@ -299,16 +304,16 @@ export class DocumentAnalyzerService {
     return {
       targetHotel: getTargetHotel(),
       guestName: getGuestName(),
-      checkIn: getCheckInDate(),
-      checkOut: getCheckOutDate(),
+      checkInDate: getCheckInDate(),
+      checkOutDate: getCheckOutDate(),
       totalToPay: getTotalToPay(),
-      reservationIdtarget: getReservationIdTarget(),
-      fiscalCodeTarget: getInvoiceRFCTarget(),
-      fiscalEmailTargets: getInvoiceEmails(),
-    };
+      targetReservationId: getReservationIdTarget(),
+      invoiceFiscalCodeTarget: getInvoiceRFCTarget(),
+      invoiceEmailTarget: getInvoiceEmails(),
+    } as CouponExtraction;
   }
 
-  private extractGBTData(text: string): any {
+  private extractGBTData(text: string): CouponExtraction {
     const { GBT_TRAVEL_SERVICES } = COUPONS_PROVIDERS_PATTERNS;
     const getTargetHotel = () => {
       const match = text.match(GBT_TRAVEL_SERVICES.TARGET_HOTEL);
@@ -361,10 +366,12 @@ export class DocumentAnalyzerService {
     return {
       targetHotel: getTargetHotel(),
       guestName: getGuestName(),
-      checkIn: getCheckInDate(),
-      reservationIdtarget: getReservationIdTarget(),
-      fiscalCodeTarget: getInvoiceRFCTarget(),
-      fiscalEmailTargets: getInvoiceEmails(),
-    };
+      checkInDate: getCheckInDate(),
+      checkOutDate: '', // Not available in GBT data
+      totalToPay: 0, // Not available in GBT data
+      targetReservationId: getReservationIdTarget(),
+      invoiceFiscalCodeTarget: getInvoiceRFCTarget(),
+      invoiceEmailTarget: getInvoiceEmails(),
+    } as CouponExtraction;
   }
 }

@@ -128,9 +128,7 @@ export class PrepaidService {
 
   private async getCoupon(reservationId: string): Promise<Coupon> {
     let coupon: Coupon = {
-      id: null,
       sourceReservation: reservationId,
-      filePath: '',
       provider: DEFAULT_PREPAID_PROVIDER,
       isValid: false,
     };
@@ -160,11 +158,6 @@ export class PrepaidService {
     );
 
     const analyzerResponses = await Promise.all(analyzerPromises);
-    coupon.isValid = true;
-    coupon.provider = analyzerResponses[0].classification.provider;
-    coupon.analysis = analyzerResponses[0];
     return coupon;
-
-    // return await lastValueFrom(forkJoin(downloadDocsPromises));
   }
 }

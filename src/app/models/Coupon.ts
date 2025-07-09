@@ -1,8 +1,8 @@
+import CouponExtraction from './CouponExtraction';
+
 export default interface Coupon {
-  id: string | null;
   sourceReservation: string;
-  filePath: string;
   provider: string;
   isValid: boolean;
-  analysis?: any;
+  couponExtraction?: CouponExtraction;
 }
