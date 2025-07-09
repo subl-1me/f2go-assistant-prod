@@ -85,7 +85,7 @@ export class DocumentAnalyzerService {
 
   private extractCTSData(text: string): any {
     const { CORPORATE_TRAVEL_SERVICES } = COUPONS_PROVIDERS_PATTERNS;
-    const getTargetHotelSimilarity = () => {
+    const getTargetHotelName = () => {
       const targetMatch = text.match(CORPORATE_TRAVEL_SERVICES.TARGET_HOTEL);
       if (targetMatch) {
         return targetMatch[0];
@@ -103,7 +103,7 @@ export class DocumentAnalyzerService {
       return 0;
     };
 
-    const getGuestNameSimilarity = () => {
+    const getTargetGuestName = () => {
       const guestNameMatch = text.match(CORPORATE_TRAVEL_SERVICES.GUEST_NAME);
       if (guestNameMatch) {
         return guestNameMatch[0];
@@ -166,8 +166,8 @@ export class DocumentAnalyzerService {
     };
 
     return {
-      targetHotelSimilarity: getTargetHotelSimilarity(),
-      guestNameSimilarity: getGuestNameSimilarity(),
+      targetHotelSimilarity: getTargetHotelName(),
+      guestNameSimilarity: getTargetGuestName(),
       checkInDates: getCheckInDates(),
       checkOutDates: getCheckOutDates(),
       reservationIdTarget: getReservationIdTarget(),
