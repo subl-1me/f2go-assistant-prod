@@ -3,6 +3,12 @@ import { lastValueFrom, map } from 'rxjs';
 import { ProxyService } from './proxy.service';
 import { COUPONS_PROVIDERS_PATTERNS } from '../Patterns';
 import CouponsProvidersPatterns from '../models/CouponsProvidersPatterns';
+import {
+  COUPON,
+  DOCUMENT_TYPE_COUPON,
+  DOCUMENT_TYPE_RFC,
+  DOCUMENT_TYPE_UNSUPORTED,
+} from '../const';
 
 @Injectable({
   providedIn: 'root',
@@ -29,8 +35,35 @@ export class DocumentAnalyzerService {
 
       const text = response.body.text;
       const sanitized = this.sanitizeText(text);
-      const classification = this.classify(sanitized);
-      return { error: false, classification };
+      const { classification, provider } = this.classify(sanitized);
+      if (classification === DOCUMENT_TYPE_UNSUPORTED) {
+        return {
+          error: true,
+          message: `Unsupported document type. The document is classified as ${classification}.`,
+        };
+      }
+
+      if (classification === DOCUMENT_TYPE_COUPON && provider) {
+        const extraction = this.startCouponExtractionProcess(
+          provider,
+          sanitized
+        );
+
+        return {
+          error: false,
+          message: `The document is classified as ${classification} from provider ${provider}.`,
+          extraction,
+        };
+      }
+
+      if (classification === DOCUMENT_TYPE_RFC) {
+        return {
+          error: false,
+          message: `The document is classified as ${classification}.`,
+        };
+      }
+
+      return { error: false, classification, provider: provider || null };
     } catch (err) {
       return {
         error: true,
@@ -51,36 +84,42 @@ export class DocumentAnalyzerService {
   }
 
   private classify(text: string): any {
-    console.log(text);
+    let classification = DOCUMENT_TYPE_UNSUPORTED;
+
+    // Check if document is a Coupon
     const couponProvidersNames = Object.keys(COUPONS_PROVIDERS_PATTERNS);
     for (const provider of couponProvidersNames) {
       const signature = text.match(
         COUPONS_PROVIDERS_PATTERNS[provider as keyof CouponsProvidersPatterns]
           .SIGNATURE
       );
+
       // means its coupon
       if (signature) {
-        // start coupon extraction process
-        console.log(`Access for ${provider}`);
-        let extraction;
-        switch (provider) {
-          case 'CORPORATE_TRAVEL_SERVICES':
-            extraction = this.extractCTSData(text);
-            return { provider, extraction };
-          case 'CITY_ACCESS':
-            extraction = this.extractCityAcessData(text);
-            return { provider, extraction };
-          case 'GBT_TRAVEL_SERVICES':
-            extraction = this.extractGBTData(text);
-            return { provider, extraction };
-          default:
-            console.log(`Invalid coupon provider signature: ${provider}`);
-            break;
-        }
+        classification = DOCUMENT_TYPE_COUPON;
+        return { classification, provider };
       }
     }
 
-    return { provider: null, extraction: null };
+    return classification;
+  }
+
+  private startCouponExtractionProcess(provider: string, text: string): any {
+    let extraction: any = null;
+    switch (provider) {
+      case 'CORPORATE_TRAVEL_SERVICES':
+        extraction = this.extractCTSData(text);
+        return { provider, extraction };
+      case 'CITY_ACCESS':
+        extraction = this.extractCityAcessData(text);
+        return { provider, extraction };
+      case 'GBT_TRAVEL_SERVICES':
+        extraction = this.extractGBTData(text);
+        return { provider, extraction };
+      default:
+        console.log(`Invalid coupon provider signature: ${provider}`);
+        break;
+    }
   }
 
   private extractCTSData(text: string): any {
