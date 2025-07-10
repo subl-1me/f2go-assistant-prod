@@ -7,6 +7,7 @@ import {
   DEFAULT_PREPAID_TYPE,
   DEFAULT_VCC_PROVIDER,
   DEFAULT_VCC_TYPE,
+  DOCUMENT_TYPE_COUPON,
   VIRTUAL_CREDIT_CARD,
 } from '../../const';
 import { ReservationService } from './reservation.service';
@@ -41,10 +42,9 @@ export class PrepaidService {
       data: null,
     };
 
-    const [virtualCreditCard, bonvoyCertificate, coupon] = await Promise.all([
+    const [virtualCreditCard, bonvoyCertificate] = await Promise.all([
       this.getVirtualCard(reservationId),
       this.getBonvoyCertificateId(reservationId),
-      this.getCoupon(reservationId),
     ]);
 
     if (
@@ -59,12 +59,6 @@ export class PrepaidService {
       prepaidMethod.data = bonvoyCertificate;
       prepaidMethod.type = BONVOY_CERTIFICATE;
     }
-
-    if (coupon.isValid && coupon.provider !== DEFAULT_PREPAID_PROVIDER) {
-      prepaidMethod.data = coupon;
-      prepaidMethod.type = COUPON;
-    }
-
     return prepaidMethod;
   }
 
@@ -158,6 +152,11 @@ export class PrepaidService {
     );
 
     const analyzerResponses = await Promise.all(analyzerPromises);
+
+    const couponResponses = analyzerResponses.filter(
+      (response) => response.classification === DOCUMENT_TYPE_COUPON
+    );
+
     return coupon;
   }
 }

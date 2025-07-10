@@ -1,3 +1,4 @@
+import Comparation from './Comparation';
 import CouponExtraction from './CouponExtraction';
 
 export default interface Coupon {
@@ -5,4 +6,5 @@ export default interface Coupon {
   provider: string;
   isValid: boolean;
   couponExtraction?: CouponExtraction;
+  comparation?: Comparation;
 }

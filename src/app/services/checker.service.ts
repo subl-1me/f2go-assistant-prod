@@ -3,6 +3,7 @@ import Reservation from '../models/Reservation';
 import { LedgerService } from './operations/ledger.service';
 import { PrepaidService } from './operations/prepaid.service';
 import { DEFAULT_PREPAID_TYPE } from '../const';
+import { ReservationService } from './operations/reservation.service';
 
 @Injectable({
   providedIn: 'root',
@@ -10,7 +11,8 @@ import { DEFAULT_PREPAID_TYPE } from '../const';
 export class CheckerService {
   constructor(
     private ledgerService: LedgerService,
-    private prePaidService: PrepaidService
+    private prePaidService: PrepaidService,
+    private reservationService: ReservationService
   ) {}
   public async performChecker(reservations: Reservation[]): Promise<any> {
     // first load reservation ledgers, documents, VCC, notes, rates & helpful stuff
@@ -23,24 +25,17 @@ export class CheckerService {
       return { reservation: reservations[index], data };
     });
 
-    collectedData.forEach((data) => this.startStandardCheck(data));
+    const checkPromises = collectedData.map((collectedData) =>
+      this.startStandardCheck(collectedData)
+    );
 
-    return { status: 200, message: 'OK', collectedData };
+    const checkResults = await Promise.all(checkPromises);
+    return { status: 200, message: 'OK', checkResults };
   }
 
-  private startStandardCheck(collectedData: any): any {
+  private async startStandardCheck(collectedData: any): Promise<any> {
     const { data, reservation } = collectedData;
-    const { ledgers, prePaidMethod } = data;
-
-    if (
-      prePaidMethod &&
-      prePaidMethod.type !== DEFAULT_PREPAID_TYPE &&
-      prePaidMethod.data
-    ) {
-      console.log(
-        `Room ${reservation.room} is already paid by ${prePaidMethod.type}`
-      );
-    }
+    const { ledgers, prePaidMethod, documents } = data;
   }
 
   private async collectReservationData(reservation: Reservation): Promise<any> {
@@ -48,7 +43,6 @@ export class CheckerService {
     const ledgers = await this.ledgerService.getReservationledger(
       reservation.id
     );
-    reservation.ledgers = ledgers;
 
     // load ledgers transactions
     const ledgerTransactionsPromises = ledgers.map((ledger) => {
@@ -57,7 +51,7 @@ export class CheckerService {
 
     // load transaction for each ledger
     const transactions = await Promise.all(ledgerTransactionsPromises);
-    reservation.ledgers.forEach((ledger, index) => {
+    ledgers.forEach((ledger, index) => {
       ledger.transactions = transactions[index];
     });
 
@@ -66,9 +60,15 @@ export class CheckerService {
       reservation.id
     );
 
+    // search for reservation attached documents
+    const documents = await this.reservationService.getAttachedDocuments(
+      reservation.id
+    );
+
     return {
       ledgers,
       prePaidMethod,
+      documents,
     };
   }
 }

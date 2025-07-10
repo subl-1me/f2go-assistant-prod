@@ -10,6 +10,9 @@ import {
   DOCUMENT_TYPE_UNSUPORTED,
 } from '../const';
 import CouponExtraction from '../models/CouponExtraction';
+import Reservation from '../models/Reservation';
+import { environment } from '../../environment';
+import Comparation from '../models/Comparation';
 
 @Injectable({
   providedIn: 'root',
@@ -103,6 +106,81 @@ export class DocumentAnalyzerService {
     }
 
     return classification;
+  }
+
+  public compare(
+    reservation: Reservation,
+    extraction: CouponExtraction
+  ): Comparation {
+    const { targetHotel, guestName, checkInDate, checkOutDate } = extraction;
+
+    // Compare hotel names
+    const hotelNameSimilarity = () => {
+      const normalizedTarget = targetHotel
+        .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toUpperCase();
+
+      const similarity =
+        normalizedTarget === environment.HOTEL_NAME.toUpperCase() ? 1 : 0.8;
+      return { similarity, fields: [normalizedTarget, environment.HOTEL_NAME] };
+    };
+
+    // Compare guest names
+    const guestNameSimilarity = () => {
+      const normalizedGuest = guestName
+        .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toUpperCase();
+
+      const similarity =
+        normalizedGuest === reservation.guestName.toUpperCase() ? 1 : 0.8;
+      return { similarity, fields: [normalizedGuest, reservation.guestName] };
+    };
+
+    // Compare check-in dates
+    const checkInDateSimilarity = () => {
+      const normalizedCheckIn = checkInDate
+        .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toUpperCase();
+
+      const similarity =
+        normalizedCheckIn === reservation.dateIn.toUpperCase() ? 1 : 0.8;
+      return { similarity, fields: [normalizedCheckIn, reservation.dateIn] };
+    };
+
+    // Compare check-out dates
+    const checkOutDateSimilarity = () => {
+      const normalizedCheckOut = checkOutDate
+        .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toUpperCase();
+
+      const similarity =
+        normalizedCheckOut === reservation.dateOut.toUpperCase() ? 1 : 0.8;
+      return { similarity, fields: [normalizedCheckOut, reservation.dateOut] };
+    };
+
+    // Calculate overall similarity score
+    const overallSimilarity =
+      (hotelNameSimilarity().similarity +
+        guestNameSimilarity().similarity +
+        checkInDateSimilarity().similarity +
+        checkOutDateSimilarity().similarity) /
+      4;
+
+    return {
+      hotelName: hotelNameSimilarity(),
+      guestName: guestNameSimilarity(),
+      checkIn: checkInDateSimilarity(),
+      checkOut: checkOutDateSimilarity(),
+      overallSimilarity,
+    } as Comparation;
   }
 
   private startCouponExtractionProcess(provider: string, text: string): any {
