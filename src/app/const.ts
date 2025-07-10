@@ -27,3 +27,16 @@ export const DOCUMENT_TYPE_COUPON = 'COUPON';
 export const DOCUMENT_TYPE_INVOICE = 'INVOICE';
 export const DOCUMENT_TYPE_UNSUPORTED = 'UNSUPPORTED';
 export const DOCUMENT_TYPE_RFC = 'RFC';
+
+// Payment status
+export const PAYMENT_STATUS_PENDING = 'PENDING';
+export const PAYMENT_STATUS_PAID = 'PAID';
+export const PAYMENT_STATUS_UNPAID = 'UNPAID';
+export const PAYMENT_STATUS_PARTIAL = 'PARTIAL';
+export const PAYMENT_STATUS_ERROR = 'ERROR';
+export const PAYMENT_STATUS_PREPAID = 'PREPAID';
+
+// Checker status
+export const CHECKER_STATUS_PENDING = 'PENDING';
+export const CHECKER_STATUS_CHECKING = 'CHECKING';
+export const CHECKER_STATUS_CHECKED = 'CHECKED';

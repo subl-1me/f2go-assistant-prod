@@ -106,7 +106,8 @@ export class ReservationService {
                     '{docIdField}',
                     doc.id
                   ).replace('{rsrvIdField}', reservationId),
-                };
+                  sourceId: reservationId,
+                } as AttachedDocuments;
               });
             })
           )

@@ -22,7 +22,7 @@ export class DocumentAnalyzerService {
 
   public async analyze(path: string): Promise<any> {
     if (!path || path === '') {
-      return { error: false, message: 'PDF file path required.' };
+      return { error: true, message: 'PDF file path required.' };
     }
 
     try {
@@ -39,15 +39,15 @@ export class DocumentAnalyzerService {
 
       const text = response.body.text;
       const sanitized = this.sanitizeText(text);
-      const { classification, provider } = this.classify(sanitized);
-      if (classification === DOCUMENT_TYPE_UNSUPORTED) {
+      const { type, provider } = this.classify(sanitized);
+      if (type === DOCUMENT_TYPE_UNSUPORTED) {
         return {
           error: true,
-          message: `Unsupported document type. The document is classified as ${classification}.`,
+          message: `Unsupported document type. The document is classified as ${type}.`,
         };
       }
 
-      if (classification === DOCUMENT_TYPE_COUPON && provider) {
+      if (type === DOCUMENT_TYPE_COUPON && provider) {
         const extraction = this.startCouponExtractionProcess(
           provider,
           sanitized
@@ -55,19 +55,20 @@ export class DocumentAnalyzerService {
 
         return {
           error: false,
-          message: `The document is classified as ${classification} from provider ${provider}.`,
-          extraction,
+          type,
+          data: extraction,
+          provider,
         };
       }
 
-      if (classification === DOCUMENT_TYPE_RFC) {
+      if (type === DOCUMENT_TYPE_RFC) {
         return {
           error: false,
-          message: `The document is classified as ${classification}.`,
+          message: `The document is classified as ${provider}.`,
         };
       }
 
-      return { error: false, classification, provider: provider || null };
+      return { error: false, type, provider: provider || null };
     } catch (err) {
       return {
         error: true,
@@ -88,7 +89,7 @@ export class DocumentAnalyzerService {
   }
 
   private classify(text: string): any {
-    let classification = DOCUMENT_TYPE_UNSUPORTED;
+    let type = DOCUMENT_TYPE_UNSUPORTED;
 
     // Check if document is a Coupon
     const couponProvidersNames = Object.keys(COUPONS_PROVIDERS_PATTERNS);
@@ -100,12 +101,11 @@ export class DocumentAnalyzerService {
 
       // means its coupon
       if (signature) {
-        classification = DOCUMENT_TYPE_COUPON;
-        return { classification, provider };
+        return { type: DOCUMENT_TYPE_COUPON, provider };
       }
     }
 
-    return classification;
+    return type;
   }
 
   public compare(
@@ -201,7 +201,7 @@ export class DocumentAnalyzerService {
         break;
     }
 
-    return { provider, extraction };
+    return extraction;
   }
 
   private extractCTSData(text: string): CouponExtraction {
