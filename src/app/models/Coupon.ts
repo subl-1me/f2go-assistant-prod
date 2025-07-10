@@ -7,4 +7,5 @@ export default interface Coupon {
   isValid: boolean;
   couponExtraction?: CouponExtraction;
   comparation?: Comparation;
+  priority?: number;
 }

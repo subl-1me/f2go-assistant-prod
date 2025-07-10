@@ -3,6 +3,7 @@ import Reservation from '../models/Reservation';
 import { LedgerService } from './operations/ledger.service';
 import { PrepaidService } from './operations/prepaid.service';
 import {
+  ACCESS,
   CHECKER_STATUS_CHECKED,
   CHECKER_STATUS_PENDING,
   COUPON,
@@ -96,11 +97,11 @@ export class CheckerService {
             checkResult.prePaidMethod = {
               type: COUPON,
               data: {
-                type: COUPON,
                 provider: mainCoupon.provider,
                 isValid: true,
                 sourceReservation: reservation.id,
                 comparation: mainCoupon.comparation,
+                priority: mainCoupon.priority,
               },
             };
           } else {
@@ -157,12 +158,16 @@ export class CheckerService {
           isValid: true,
           sourceReservation: reservation.id,
           comparation: comparation,
+          priority: coupons[index].provider === ACCESS ? 2 : 1,
         };
       });
 
     const invalidCoupons = couponResults.filter(
       (result) => result.overallSimilarity < 0.8
     );
+
+    // sort valid coupons by priority
+    validCoupons.sort((a, b) => a.priority - b.priority);
 
     return {
       validCoupons,
