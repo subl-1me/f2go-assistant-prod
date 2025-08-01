@@ -3,12 +3,19 @@ import { environment } from '../../environment';
 import { FrontService } from './front-service';
 import Extractor from '../Extractor';
 import Operator from '../models/operator';
+import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
   private extractor: Extractor;
+  private isAuthenticatedSubject = new BehaviorSubject<boolean>(
+    this.isAuthenticated()
+  );
+
+  public isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
+
   constructor(private frontService: FrontService) {
     this.extractor = new Extractor();
   }
@@ -32,11 +39,13 @@ export class AuthService {
     );
     const login = await this.auth(formData);
     localStorage.setItem('authorized', 'true');
+    this.isAuthenticatedSubject.next(true);
     return login;
   }
 
   public async logout() {
     localStorage.clear();
+    this.isAuthenticatedSubject.next(false);
   }
 
   private async auth(formData: FormData): Promise<any> {
@@ -159,7 +168,7 @@ export class AuthService {
           if (response.status !== 200) {
             alert('Failed to set HDN property: ' + response.rawData);
           }
-          this.saveAspNetToken(response.cookies || '');
+          // this.saveAspNetToken(response.cookies || ''); // optional
         },
         error: (error) => {
           console.error('Error setting HDN property:', error);

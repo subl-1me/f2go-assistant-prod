@@ -32,7 +32,7 @@ export class LoginComponent {
 
     this.isLoading = true;
     const authentication = await this.authService.authenticate(this.operator);
-    console.log(authentication);
+    this.router.navigate(['/']);
     this.isLoading = false;
   }
 }
