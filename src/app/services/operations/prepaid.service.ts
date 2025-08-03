@@ -21,6 +21,7 @@ import AttachedDocuments from '../../models/AttachedDocuments';
 import PrePaidMethod from '../../models/PrePaidMethod';
 import BonvoyCertificate from '../../models/BonvoyCertificate';
 import Coupon from '../../models/Coupon';
+import { fetchInBatch } from '../../utils/fetch.util';
 
 @Injectable({
   providedIn: 'root',
@@ -42,10 +43,20 @@ export class PrepaidService {
       data: null,
     };
 
-    const [virtualCreditCard, bonvoyCertificate] = await Promise.all([
+    const prepaidPromisesArray = [
       this.getVirtualCard(reservationId),
       this.getBonvoyCertificateId(reservationId),
-    ]);
+    ];
+
+    const results = await fetchInBatch(
+      prepaidPromisesArray,
+      Number(environment.BATCH_SIZE) | 3
+    );
+
+    console.log(results);
+
+    const virtualCreditCard = results[0];
+    const bonvoyCertificate = results[1];
 
     if (
       virtualCreditCard.type !== DEFAULT_VCC_PROVIDER &&

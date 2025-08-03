@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { ENVIRONMENT_INITIALIZER, Injectable } from '@angular/core';
 import Reservation from '../models/Reservation';
 import { LedgerService } from './operations/ledger.service';
 import { PrepaidService } from './operations/prepaid.service';
@@ -18,8 +18,10 @@ import { ReservationService } from './operations/reservation.service';
 import StandardCheckResult from '../models/StandardCheckResult';
 import { FrontService } from './front-service';
 import AttachedDocuments from '../models/AttachedDocuments';
-import { forkJoin, lastValueFrom } from 'rxjs';
+import { forkJoin, lastValueFrom, Observable } from 'rxjs';
 import { DocumentAnalyzerService } from './document-analyzer.service';
+import { environment } from '../../environment';
+import { fetchInBatch } from '../utils/fetch.util';
 
 @Injectable({
   providedIn: 'root',
@@ -32,30 +34,42 @@ export class CheckerService {
     private frontService: FrontService,
     private documentAnalyzerService: DocumentAnalyzerService
   ) {}
+
   public async performChecker(reservations: Reservation[]): Promise<any> {
     // first load reservation ledgers, documents, VCC, notes, rates & helpful stuff
     const loadReservationDataPromises = reservations.map((reservation) => {
       return this.collectReservationData(reservation);
     });
 
-    const loadedReservations = await Promise.all(loadReservationDataPromises);
-    const collectedData = loadedReservations.map((data, index) => {
+    const loadedReservations = await fetchInBatch(
+      loadReservationDataPromises,
+      Number(environment.BATCH_SIZE) || 3
+    );
+
+    const collectedData = loadedReservations.map((data: any, index: number) => {
       return { reservation: reservations[index], data };
     });
 
-    const checkPromises = collectedData.map((collectedData) =>
-      this.startStandardCheck(collectedData)
+    const checkPromises = collectedData.map((data: any) => {
+      return this.startStandardCheck(data.reservation, data.data);
+    });
+
+    const checkResults = await fetchInBatch(
+      checkPromises,
+      Number(environment.BATCH_SIZE) || 3
     );
 
-    const checkResults = await Promise.all(checkPromises);
+    console.log(checkResults);
+
     return { status: 200, message: 'OK', checkResults };
   }
 
   private async startStandardCheck(
+    reservation: Reservation,
     collectedData: any
   ): Promise<StandardCheckResult> {
     let checkResult: StandardCheckResult = {
-      reservation: collectedData.reservation,
+      reservation,
       checkStatus: CHECKER_STATUS_PENDING,
       paymentStatus: PAYMENT_STATUS_PENDING,
       documents: [],
@@ -63,15 +77,12 @@ export class CheckerService {
       lastCheck: new Date(),
     };
 
-    const { data, reservation } = collectedData;
-    const { ledgers, prePaidMethod, documents } = data;
+    const { ledgers, prePaidMethod, documents } = collectedData;
 
     if (prePaidMethod.type !== DEFAULT_PREPAID_TYPE) {
       checkResult.prePaidMethod = prePaidMethod;
       checkResult.paymentStatus = PAYMENT_STATUS_PREPAID;
       checkResult.ledgers = ledgers;
-      checkResult.checkStatus = CHECKER_STATUS_CHECKED;
-      checkResult.checkAgainAt = new Date(reservation.dateOut);
     }
 
     // if has documents, classify them
@@ -113,10 +124,14 @@ export class CheckerService {
       }
     }
 
+    checkResult.checkAgainAt = new Date(reservation.dateOut);
+    checkResult.checkStatus = CHECKER_STATUS_CHECKED;
     return checkResult;
   }
 
-  private async downloadAttachedDocuments(documents: AttachedDocuments[]) {
+  private async downloadAttachedDocuments(
+    documents: AttachedDocuments[]
+  ): Promise<any> {
     const downloadPromises = documents.map((document) =>
       this.frontService.downloadFile(
         document.downloadUrl,
@@ -126,14 +141,21 @@ export class CheckerService {
       )
     );
 
-    const downloadResults = await Promise.all(downloadPromises);
-    const downloads = await lastValueFrom(forkJoin(downloadResults));
+    const downloadResults = await fetchInBatch(
+      downloadPromises,
+      Number(environment.BATCH_SIZE) || 3
+    );
+
+    // const downloadResults = await Promise.all(downloadPromises);
+    const downloads: any = await lastValueFrom(forkJoin(downloadResults));
 
     // classify them
     const successfulDownloads = downloads.filter(
-      (download) => download.success
+      (download: any) => download.success
     );
-    const errorDownloads = downloads.filter((download) => !download.success);
+    const errorDownloads = downloads.filter(
+      (download: any) => !download.success
+    );
 
     return { successfulDownloads, errorDownloads };
   }
@@ -204,7 +226,11 @@ export class CheckerService {
     });
 
     // load transaction for each ledger
-    const transactions = await Promise.all(ledgerTransactionsPromises);
+    const transactions = await fetchInBatch(
+      ledgerTransactionsPromises,
+      Number(environment.BATCH_SIZE) | 3
+    );
+    // const transactions = await Promise.all(ledgerTransactionsPromises);
     ledgers.forEach((ledger, index) => {
       ledger.transactions = transactions[index];
     });

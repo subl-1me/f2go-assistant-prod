@@ -4,5 +4,5 @@ import { VirtualCreditCard } from './VirtualCreditCard';
 
 export default interface PrePaidMethod {
   type: string;
-  data: VirtualCreditCard | BonvoyCertificate | Coupon | null;
+  data: VirtualCreditCard | BonvoyCertificate | Coupon | string | null;
 }
