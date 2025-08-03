@@ -1,4 +1,4 @@
-import { ENVIRONMENT_INITIALIZER, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import Reservation from '../models/Reservation';
 import { LedgerService } from './operations/ledger.service';
 import { PrepaidService } from './operations/prepaid.service';
