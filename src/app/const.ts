@@ -30,8 +30,8 @@ export const DOCUMENT_TYPE_RFC = 'RFC';
 
 // Payment status
 export const PAYMENT_STATUS_PENDING = 'PENDING';
-export const PAYMENT_STATUS_PAID = 'PAID';
-export const PAYMENT_STATUS_UNPAID = 'UNPAID';
+export const PAYMENT_STATUS_FULLY_PAID = 'FULLY_PAID';
+export const PAYMENT_STATUS_TODAY_PAID = 'TODAY_PAID';
 export const PAYMENT_STATUS_PARTIAL = 'PARTIAL';
 export const PAYMENT_STATUS_ERROR = 'ERROR';
 export const PAYMENT_STATUS_PREPAID = 'PREPAID';

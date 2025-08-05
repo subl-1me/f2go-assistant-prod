@@ -18,9 +18,9 @@ export class FrontService {
     const contentType = response.headers.get('content-type') || '';
 
     if (contentType.includes('application/json')) {
-      return response.body; // Angular ya parsea JSON automáticamente
+      return response.body; // JSON parsed
     } else {
-      // Para HTML, podrías convertirlo a un objeto con el texto y metadatos
+      // To handle HTML server returns
       return {
         rawData: response.body,
         cookies:

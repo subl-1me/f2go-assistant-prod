@@ -7,6 +7,7 @@ export const fetchInBatch = async (
   customBatchSize?: number
 ): Promise<any> => {
   const results: any[] = [];
+  console.log(checkPromises);
 
   for (let i = 0; i < checkPromises.length; i += batchSize) {
     const batchStart = i;

@@ -39,6 +39,7 @@ export class DocumentAnalyzerService {
 
       const text = response.body.text;
       const sanitized = this.sanitizeText(text);
+      console.log(sanitized);
       const { type, provider } = this.classify(sanitized);
       if (type === DOCUMENT_TYPE_UNSUPORTED) {
         return {

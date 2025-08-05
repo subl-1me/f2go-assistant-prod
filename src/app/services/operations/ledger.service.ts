@@ -5,12 +5,16 @@ import { FrontService } from '../front-service';
 import Reservation from '../../models/Reservation';
 import Transaction from '../../models/Transaction';
 import { HttpParams } from '@angular/common/http';
+import { ReservationService } from './reservation.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class LedgerService {
-  constructor(private frontService: FrontService) {}
+  constructor(
+    private frontService: FrontService,
+    private reservationService: ReservationService
+  ) {}
 
   public getReservationledger(reservationId: string): Promise<Ledger[]> {
     const API_URI = environment.FRONT_API_GET_RSRV_LEDGERS.replace(
@@ -84,5 +88,123 @@ export class LedgerService {
     });
   }
 
-  public async classifyLedgers(ledgers: Ledger[]): Promise<any> {}
+  public async classifyLedgers(ledgers: Ledger[]): Promise<any> {
+    const active = ledgers.filter((ledger) =>
+      ledger.transactions.find(
+        (trans) => trans.type === 'PAYMENT' || trans.type === 'CHARGE'
+      )
+    );
+
+    const inactive = ledgers.filter(
+      (ledger) => ledger.transactions.length === 0 && ledger.status === 'OPEN'
+    );
+
+    const invoiced = ledgers.filter(
+      (ledger) =>
+        ledger.isInvoiced && ledger.invoice && ledger.status === 'CLOSED'
+    );
+
+    const invoicable = ledgers.filter(
+      (ledger) =>
+        !ledger.invoice &&
+        !ledger.isInvoiced &&
+        ledger.balance === 0 &&
+        ledger.transactions.find((ledger) => ledger.type === 'PAYMENT')
+    );
+
+    const nousable = ledgers.filter(
+      (ledger) => ledger.transactions.length === 0 && ledger.status === 'CLOSED'
+    );
+
+    return { active, inactive, invoiced, invoicable, nousable };
+  }
+
+  public async checkLedgers(
+    ledgers: Ledger[],
+    reservationId: string
+  ): Promise<any> {
+    let ledgersStatus: any = {
+      error: false,
+      errors: [],
+      isPendingToPay: true,
+      isFullyPaid: false,
+      isPartialPay: false,
+      isTodayPaid: false,
+      ledgersPendingToPay: [],
+      ledgersPaid: [],
+    };
+
+    const { active } = await this.classifyLedgers(ledgers);
+
+    // get reservation rates
+    const rates = await this.reservationService.getReservationRates(
+      reservationId
+    );
+
+    const totalToPay = rates.reduce((accum, current) => {
+      return (accum += current.amount);
+    }, 0);
+
+    const ledgersWithPayment = active.filter((ledger: Ledger) =>
+      ledger.transactions.find((trans) => trans.type === 'PAYMENT')
+    );
+
+    ledgersWithPayment.forEach((ledger: Ledger) => {
+      let totalPaymentsAmount = ledger.transactions.reduce((accum, current) => {
+        if (current.type === 'PAYMENT') {
+          return (accum += current.amount);
+        }
+
+        return (accum += 0);
+      }, 0);
+
+      totalPaymentsAmount = Math.abs(totalPaymentsAmount);
+
+      // TODO: Check if total pymnt amount covers all reseservation
+      if (totalPaymentsAmount === totalToPay) {
+        ledgersStatus.isFullyPaid = true;
+        ledgersStatus.isPendingToPay = false;
+        ledgersStatus.ledgersPaid.push(ledger.ledgerNo);
+      }
+
+      // TODO: calculate how many nights the pymtn cover
+      // Check if current night is paid
+      const appDate = '2025/08/04';
+      const todayRate = rates.find((rate) => rate.date === appDate);
+      if (!todayRate) {
+        ledgersStatus.error = true;
+        ledgersStatus.errors.push({ message: 'Today rate not found.' });
+      } else {
+        if (totalPaymentsAmount >= todayRate.amount) {
+          // today is covered
+          ledgersStatus.isTodayPaid = true;
+          ledgersStatus.isPendingToPay = false;
+        }
+      }
+
+      // TODO: determinate if ledgers exceed of payments
+      if (totalPaymentsAmount > totalToPay) {
+        //TODO: Could be router
+
+        ledgersStatus.error = true;
+        ledgersStatus.isTodayPaid = true;
+        ledgersStatus.isPendingToPay = false;
+        const diff = parseFloat(
+          (totalPaymentsAmount - totalToPay).toString()
+        ).toFixed(2);
+        ledgersStatus.errors.push({
+          message: `Payments exceed reservation's total on ledger #${ledger.ledgerNo} for $${diff}`,
+        });
+      }
+    });
+
+    const ledgersWithOutPayment = active.filter(
+      (ledger: Ledger) =>
+        !ledger.transactions.find((trans) => trans.type === 'PAYMENT')
+    );
+
+    ledgersStatus.ledgersPendingToPay = [...ledgersWithOutPayment];
+
+    return ledgersStatus;
+  }
 }

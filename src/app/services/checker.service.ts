@@ -11,8 +11,11 @@ import {
   DOCUMENT_TYPE_COUPON,
   DOCUMENT_TYPE_UNSUPORTED,
   PAYMENT_STATUS_ERROR,
+  PAYMENT_STATUS_FULLY_PAID,
+  PAYMENT_STATUS_PARTIAL,
   PAYMENT_STATUS_PENDING,
   PAYMENT_STATUS_PREPAID,
+  PAYMENT_STATUS_TODAY_PAID,
 } from '../const';
 import { ReservationService } from './operations/reservation.service';
 import StandardCheckResult from '../models/StandardCheckResult';
@@ -73,17 +76,11 @@ export class CheckerService {
       checkStatus: CHECKER_STATUS_PENDING,
       paymentStatus: PAYMENT_STATUS_PENDING,
       documents: [],
-      ledgers: [],
+      ledgersStatus: null,
       lastCheck: new Date(),
     };
 
     const { ledgers, prePaidMethod, documents } = collectedData;
-
-    if (prePaidMethod.type !== DEFAULT_PREPAID_TYPE) {
-      checkResult.prePaidMethod = prePaidMethod;
-      checkResult.paymentStatus = PAYMENT_STATUS_PREPAID;
-      checkResult.ledgers = ledgers;
-    }
 
     // if has documents, classify them
     if (documents && documents.length > 0) {
@@ -103,8 +100,11 @@ export class CheckerService {
 
           if (mainCoupon) {
             checkResult.paymentStatus = PAYMENT_STATUS_PREPAID;
-            checkResult.checkStatus = CHECKER_STATUS_CHECKED;
-            checkResult.checkAgainAt = new Date(reservation.dateOut);
+            const [year, month, day] = reservation.dateOut
+              .split('/')
+              .map(Number);
+            const dateOut = new Date(year, month - 1, day);
+            checkResult.checkAgainAt = dateOut;
             checkResult.prePaidMethod = {
               type: COUPON,
               data: {
@@ -115,16 +115,60 @@ export class CheckerService {
                 priority: mainCoupon.priority,
               },
             };
-          } else {
-            checkResult.paymentStatus = PAYMENT_STATUS_ERROR;
           }
         }
-
         checkResult.documents.push(...unsupported);
       }
     }
 
-    checkResult.checkAgainAt = new Date(reservation.dateOut);
+    // check ledgers
+    const ledgerCheck = await this.ledgerService.checkLedgers(
+      ledgers,
+      reservation.id
+    );
+
+    checkResult.ledgersStatus = ledgerCheck;
+
+    if (prePaidMethod.type !== DEFAULT_PREPAID_TYPE) {
+      checkResult.prePaidMethod = prePaidMethod;
+      checkResult.paymentStatus = PAYMENT_STATUS_PREPAID;
+      const [year, month, day] = reservation.dateOut.split('/').map(Number);
+      const dateOut = new Date(year, month - 1, day);
+      checkResult.checkAgainAt = dateOut;
+    }
+
+    const {
+      errors,
+      error,
+      isFullyPaid,
+      isTodayPaid,
+      isPendingToPay,
+      isPartialPay,
+    } = ledgerCheck;
+
+    if (isPendingToPay && !checkResult.prePaidMethod) {
+      checkResult.paymentStatus = PAYMENT_STATUS_PENDING;
+      checkResult.checkAgainAt = new Date();
+    }
+
+    if (isTodayPaid && !checkResult.prePaidMethod) {
+      checkResult.paymentStatus = PAYMENT_STATUS_TODAY_PAID;
+      checkResult.checkAgainAt = new Date()
+        .setDate(new Date().getDate() + 1)
+        .toString();
+    }
+
+    if (isPartialPay && !checkResult.prePaidMethod) {
+      checkResult.paymentStatus = PAYMENT_STATUS_PARTIAL;
+    }
+
+    if (isFullyPaid && !checkResult.prePaidMethod) {
+      checkResult.paymentStatus = PAYMENT_STATUS_FULLY_PAID;
+      const [year, month, day] = reservation.dateOut.split('/').map(Number);
+      const dateOut = new Date(year, month - 1, day);
+      checkResult.checkAgainAt = dateOut;
+    }
+
     checkResult.checkStatus = CHECKER_STATUS_CHECKED;
     return checkResult;
   }
@@ -211,6 +255,9 @@ export class CheckerService {
     const coupons = classifications.filter(
       (classification) => classification.type === DOCUMENT_TYPE_COUPON
     );
+
+    console.log(unsupported);
+    console.log(coupons);
     return { unsupported, coupons };
   }
 

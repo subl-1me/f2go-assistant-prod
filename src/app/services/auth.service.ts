@@ -97,13 +97,12 @@ export class AuthService {
               });
             }
 
-            console.log(response);
             this.extractor = new Extractor(response.rawData);
             const verificationToken =
               this.extractor.extractRequestVerificationToken();
 
             // save verification token on localstorage
-            // localStorage.setItem('verificationToken', verificationToken);
+            localStorage.setItem('verificationToken', verificationToken);
             // const cookies = response.cookies;
             // if (cookies) {
             //   // save antiforgery token optional

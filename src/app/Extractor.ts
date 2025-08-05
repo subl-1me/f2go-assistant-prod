@@ -109,4 +109,14 @@ export default class Extractor {
 
     return docs;
   }
+
+  public extractRateCode(text: string): string {
+    let rateCode = '';
+    const rateCodePattern = /var rate_code = "(.*)";/;
+    const rateCodeMatch = text.match(rateCodePattern);
+    if (rateCodeMatch) {
+      rateCode = rateCodeMatch[1];
+    }
+    return rateCode;
+  }
 }

@@ -1,4 +1,3 @@
-import Ledger from './Ledger';
 import PrePaidMethod from './PrePaidMethod';
 import Reservation from './Reservation';
 
@@ -8,7 +7,7 @@ export default interface StandardCheckResult {
   paymentStatus: string;
   checkStatus: string;
   lastCheck: Date;
-  checkAgainAt?: Date;
+  checkAgainAt?: Date | string;
   prePaidMethod?: PrePaidMethod;
-  ledgers: Ledger[];
+  ledgersStatus: any;
 }

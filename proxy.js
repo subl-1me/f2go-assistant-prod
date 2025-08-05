@@ -322,7 +322,6 @@ app.all("/proxy", async (req, res) => {
     // Determinar el tipo de respuesta
     if (contentType.includes("application/json")) {
       const jsonData = await response.json();
-      console.log(jsonData);
       res.status(response.status).json(jsonData);
     } else {
       if (response.body) {
