@@ -4,6 +4,7 @@ import { FrontService } from './front-service';
 import Extractor from '../Extractor';
 import Operator from '../models/operator';
 import { BehaviorSubject } from 'rxjs';
+import { RequestQueueService } from './request-queue.service';
 
 @Injectable({
   providedIn: 'root',
@@ -27,9 +28,19 @@ export class AuthService {
   }
 
   public async authenticate(operator: Operator): Promise<any> {
-    const tokenResponse = await this.getRequestVerificationToken();
-    const { status, verificationToken } = tokenResponse;
+    const requestQueue = RequestQueueService.getInstance();
+    requestQueue.addRequest(async () => {
+      const response = await this.getRequestVerificationToken();
+      return response;
+    });
+
+    const verifResponses = await requestQueue.waitForAll();
+    const tokenResponse = verifResponses[0];
+    const { verificationToken, status } = tokenResponse;
+
+    requestQueue.clearPendingRequests();
     if (!verificationToken || status !== 200) {
+      localStorage.removeItem('verificationToken');
       return tokenResponse;
     }
 
@@ -37,9 +48,19 @@ export class AuthService {
       operator,
       verificationToken
     );
-    const login = await this.auth(formData);
-    localStorage.setItem('authorized', 'true');
-    this.isAuthenticatedSubject.next(true);
+
+    requestQueue.addRequest(async () => {
+      const response = await this.auth(formData);
+      return response;
+    });
+
+    const authResponses = await requestQueue.waitForAll();
+    const login = authResponses[0];
+    if (login.status === 200) {
+      localStorage.setItem('authorized', 'true');
+      this.isAuthenticatedSubject.next(true);
+    }
+
     return login;
   }
 
@@ -74,7 +95,7 @@ export class AuthService {
 
             resolve({
               status: response.status,
-              erorr: false,
+              error: false,
               message: 'Loged successfully.',
             });
           },
