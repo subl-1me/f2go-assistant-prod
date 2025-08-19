@@ -1,4 +1,4 @@
-import { afterNextRender, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import Reservation from '../../models/Reservation';
 import { environment } from '../../../environment';
 import { FrontService } from '../front-service';
@@ -8,19 +8,95 @@ import { lastValueFrom, map } from 'rxjs';
 import Extractor from '../../Extractor';
 import AttachedDocuments from '../../models/AttachedDocuments';
 import Rate from '../../models/Rate';
+import { PAYLOAD_STATUS_CHIN, ROOM_TYPES } from '../../const';
+import { RequestQueueService } from '../request-queue.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ReservationService {
   private extractor: Extractor;
+  private requestQueueu = RequestQueueService.getInstance();
 
   constructor(private frontService: FrontService) {
     this.extractor = new Extractor();
   }
 
-  public async getChinList(): Promise<Reservation[]> {
-    return [];
+  public async getInHouseReservations(): Promise<Reservation[]> {
+    const payload = {
+      pc: environment.HDN_001 || '',
+      ph: false,
+      pn: '',
+      ci: '',
+      gpi: '',
+      ti: '',
+      rc: '',
+      rm: '',
+      fm: '',
+      to: '',
+      fq: '',
+      rs: PAYLOAD_STATUS_CHIN,
+      st: 'EC',
+      grp: '',
+      gs: '',
+      sidx: 'NameGuest',
+      sord: 'asc',
+      rows: 120,
+      page: 1,
+      ss: false,
+      rcss: '',
+      user: 'HTJUGALDEA',
+      AddGuest: false,
+    };
+
+    const request = new Promise((resolve, reject) => {
+      this.frontService
+        .postRequest(environment.FRONT_API_GET_RESERVATION_LIST, payload, true)
+        .subscribe({
+          next: (response) => {
+            const data = JSON.parse(response);
+            let reservations: Reservation[] = [
+              ...data.rows.map((item: any) => {
+                return {
+                  id: item.rsrvCode,
+                  marriotId: '',
+                  guestName: item.nameGuest,
+                  room: item.room,
+                  roomType: item.roomDescription.includes(
+                    ROOM_TYPES.forEach((type) => type)
+                  ),
+                  dateIn: item.dateIn,
+                  dateOut: item.dateOut,
+                  status: item.statusGuest.trim(),
+                  numberOfGuests: Number(item.peopleNo),
+                  company: item.company,
+                  agency: item.agency,
+                  membership: item.freqTvl,
+                };
+              }),
+            ];
+
+            resolve({
+              error: false,
+              reservations,
+            });
+          },
+          error: (error) => {
+            reject(error);
+          },
+        });
+    });
+
+    this.requestQueueu.addRequest(async () => {
+      const response = await request;
+      return response;
+    });
+
+    const responses = await this.requestQueueu.waitForAll();
+    if (!responses[0].reservations) {
+      return [];
+    }
+    return responses[0].reservations;
   }
 
   public async getArrivals(): Promise<Reservation[]> {

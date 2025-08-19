@@ -11,8 +11,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { CheckerService } from '../../../services/checker.service';
 import { BackgroundProcessServiceService } from '../../../services/background-process-service.service';
-
-const roomTypes = ['Double', 'Single', 'Suite'];
+import { ReservationService } from '../../../services/operations/reservation.service';
 
 @Component({
   selector: 'app-checker',
@@ -31,9 +30,9 @@ export class CheckerComponent {
   public isChecking: boolean;
 
   constructor(
-    private frontService: FrontService,
     private checkerService: CheckerService,
-    private backgroundProcessService: BackgroundProcessServiceService
+    private backgroundProcessService: BackgroundProcessServiceService,
+    private reservationService: ReservationService
   ) {
     this.inHouseReservations = [];
     this.selectedReservations = [];
@@ -46,65 +45,10 @@ export class CheckerComponent {
   }
 
   async getInHouseReservations() {
-    const payload = {
-      pc: environment.HDN_001 || '',
-      ph: false,
-      pn: '',
-      ci: '',
-      gpi: '',
-      ti: '',
-      rc: '',
-      rm: '',
-      fm: '',
-      to: '',
-      fq: '',
-      rs: PAYLOAD_STATUS_CHIN,
-      st: 'EC',
-      grp: '',
-      gs: '',
-      sidx: 'NameGuest',
-      sord: 'asc',
-      rows: 120,
-      page: 1,
-      ss: false,
-      rcss: '',
-      user: 'HTJUGALDEA',
-      AddGuest: false,
-    };
-
-    this.frontService
-      .postRequest(environment.FRONT_API_GET_RESERVATION_LIST, payload, true)
-      .subscribe((response) => {
-        if (response.status === 401) {
-          alert('Unauthorized access. Please log in again.');
-          return;
-        }
-
-        const data = JSON.parse(response);
-        this.isLoadingInHouseReservations = false;
-        this.inHouseReservations.push(
-          ...data.rows.map((item: any) => {
-            return {
-              id: item.rsrvCode,
-              marriotId: '',
-              guestName: item.nameGuest,
-              room: item.room,
-              roomType: item.roomDescription.includes(
-                roomTypes.forEach((type) => type)
-              ),
-              dateIn: item.dateIn,
-              dateOut: item.dateOut,
-              status: item.statusGuest.trim(),
-              numberOfGuests: Number(item.peopleNo),
-              company: item.company,
-              agency: item.agency,
-              membership: item.freqTvl,
-            };
-          })
-        );
-
-        this.displaydReservations = [...this.inHouseReservations];
-      });
+    this.isLoadingInHouseReservations = true;
+    const reservations = await this.reservationService.getInHouseReservations();
+    this.displaydReservations = [...reservations];
+    this.isLoadingInHouseReservations = false;
   }
 
   async showConfirmationModal() {
