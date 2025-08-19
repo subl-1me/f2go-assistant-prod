@@ -96,6 +96,7 @@ export class ReservationService {
     if (!responses[0].reservations) {
       return [];
     }
+    this.requestQueueu.clearPendingRequests();
     return responses[0].reservations;
   }
 
