@@ -4,10 +4,13 @@ import { ProxyService } from './proxy.service';
 import { COUPONS_PROVIDERS_PATTERNS } from '../Patterns';
 import CouponsProvidersPatterns from '../models/CouponsProvidersPatterns';
 import {
-  COUPON,
+  ACCESS,
+  BCD_TRAVEL,
+  CORPORATE_TRAVEL_SERVICES,
   DOCUMENT_TYPE_COUPON,
   DOCUMENT_TYPE_RFC,
   DOCUMENT_TYPE_UNSUPORTED,
+  GBT_TRAVEL_SERVICES,
 } from '../const';
 import CouponExtraction from '../models/CouponExtraction';
 import Reservation from '../models/Reservation';
@@ -39,7 +42,6 @@ export class DocumentAnalyzerService {
 
       const text = response.body.text;
       const sanitized = this.sanitizeText(text);
-      console.log(sanitized);
       const { type, provider } = this.classify(sanitized);
       if (type === DOCUMENT_TYPE_UNSUPORTED) {
         return {
@@ -106,7 +108,7 @@ export class DocumentAnalyzerService {
       }
     }
 
-    return type;
+    return { type, provider: null };
   }
 
   public compare(
@@ -188,14 +190,17 @@ export class DocumentAnalyzerService {
     let extraction: any = null;
 
     switch (provider) {
-      case 'CORPORATE_TRAVEL_SERVICES':
+      case CORPORATE_TRAVEL_SERVICES:
         extraction = this.extractCTSData(text);
         break;
-      case 'CITY_ACCESS':
+      case ACCESS:
         extraction = this.extractCityAcessData(text);
         break;
-      case 'GBT_TRAVEL_SERVICES':
+      case GBT_TRAVEL_SERVICES:
         extraction = this.extractGBTData(text);
+        break;
+      case BCD_TRAVEL:
+        extraction = this.extractBCDData(text);
         break;
       default:
         console.log(`Invalid coupon provider signature: ${provider}`);
@@ -203,6 +208,87 @@ export class DocumentAnalyzerService {
     }
 
     return extraction;
+  }
+
+  private extractBCDData(text: string): CouponExtraction {
+    const { BCD_TRAVEL } = COUPONS_PROVIDERS_PATTERNS;
+    const getTargetHotelName = () => {
+      const targetMatch = text.match(BCD_TRAVEL.TARGET_HOTEL);
+      if (targetMatch) {
+        return targetMatch[0];
+      }
+      return '';
+    };
+
+    const getTargetGuestName = () => {
+      const guestNameMatch = text.match(BCD_TRAVEL.GUEST_NAME);
+      if (guestNameMatch) {
+        const name = guestNameMatch[0]
+          .replace('NAMES', '')
+          .replace('/', '')
+          .trim();
+        return name;
+      }
+      return '';
+    };
+
+    const getCheckInDates = () => {
+      const checkInMatch = text.match(BCD_TRAVEL.CHECK_IN);
+      if (checkInMatch) {
+        const checkIn = checkInMatch[0].replace('CHECK IN DATE', '').trim();
+        return checkIn;
+      }
+      return '';
+    };
+
+    const getCheckOutDates = () => {
+      const checkInMatch = text.match(BCD_TRAVEL.CHECK_OUT);
+      if (checkInMatch) {
+        const checkIn = checkInMatch[0].replace('CHECK OUT DATE:', '').trim();
+        return checkIn;
+      }
+      return '';
+    };
+
+    const getReservationIdTarget = () => {
+      const reservationIdMatch = text.match(BCD_TRAVEL.RESERVATION_ID_TARGET);
+      if (reservationIdMatch) {
+        const matchResult = reservationIdMatch[0].match(/\d{8}/);
+        const reservationIdTarget = matchResult ? matchResult[0] : '';
+        return reservationIdTarget;
+      }
+
+      return '';
+    };
+
+    const getInvoiceRFCTarget = () => {
+      const RFCTargetMatch = text.match(BCD_TRAVEL.INVOICE_RFC_TARGET);
+      if (RFCTargetMatch) {
+        return RFCTargetMatch[0];
+      }
+
+      return '';
+    };
+
+    const getInvoiceEmailTarget = () => {
+      const emailTargetMatch = text.match(BCD_TRAVEL.INVOICE_EMAIL_TARGET);
+      if (emailTargetMatch) {
+        return emailTargetMatch;
+      }
+
+      return [];
+    };
+
+    return {
+      targetHotel: getTargetHotelName(),
+      guestName: getTargetGuestName(),
+      checkInDate: getCheckInDates(),
+      checkOutDate: getCheckOutDates(),
+      targetReservationId: getReservationIdTarget(),
+      invoiceFiscalCodeTarget: getInvoiceRFCTarget(),
+      invoiceEmailTarget: getInvoiceEmailTarget(),
+      totalToPay: 0, // Not available in CTS data
+    } as CouponExtraction;
   }
 
   private extractCTSData(text: string): CouponExtraction {

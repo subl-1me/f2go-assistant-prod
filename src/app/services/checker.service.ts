@@ -92,11 +92,12 @@ export class CheckerService {
           successfulDownloads
         );
 
+        console.log(classifiedDocuments);
         const { unsupported, coupons } = classifiedDocuments;
         if (coupons.length > 0) {
           // find main coupon
           const { validCoupons, invalidCoupons, mainCoupon } =
-            await this.getMainCoupon(coupons, collectedData.reservation);
+            await this.getMainCoupon(coupons, reservation);
 
           if (mainCoupon) {
             checkResult.paymentStatus = PAYMENT_STATUS_PREPAID;
@@ -256,8 +257,6 @@ export class CheckerService {
       (classification) => classification.type === DOCUMENT_TYPE_COUPON
     );
 
-    console.log(unsupported);
-    console.log(coupons);
     return { unsupported, coupons };
   }
 

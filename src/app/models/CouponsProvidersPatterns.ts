@@ -4,6 +4,7 @@ export default interface CouponsProvidersPatterns {
   VIAJES_EL_CORTE_INGLES: Patterns;
   BAUSER: Patterns;
   CITY_ACCESS: Patterns;
+  BCD_TRAVEL: Patterns;
 }
 
 interface Patterns {
@@ -17,4 +18,5 @@ interface Patterns {
   INVOICE_RFC_TARGET: RegExp;
   INVOICE_EMAIL_TARGET: RegExp;
   BASE_RATE?: RegExp;
+  TOTAL_AMOUNT?: RegExp;
 }
