@@ -21,10 +21,8 @@ import { ReservationService } from './operations/reservation.service';
 import StandardCheckResult from '../models/StandardCheckResult';
 import { FrontService } from './front-service';
 import AttachedDocuments from '../models/AttachedDocuments';
-import { forkJoin, lastValueFrom, Observable } from 'rxjs';
 import { DocumentAnalyzerService } from './document-analyzer.service';
-import { environment } from '../../environment';
-import { fetchInBatch } from '../utils/fetch.util';
+import { downloaderQueue } from '../utils/queues';
 
 @Injectable({
   providedIn: 'root',
@@ -44,10 +42,7 @@ export class CheckerService {
       return this.collectReservationData(reservation);
     });
 
-    const loadedReservations = await fetchInBatch(
-      loadReservationDataPromises,
-      Number(environment.BATCH_SIZE) || 3
-    );
+    const loadedReservations = await Promise.all(loadReservationDataPromises);
 
     const collectedData = loadedReservations.map((data: any, index: number) => {
       return { reservation: reservations[index], data };
@@ -57,13 +52,7 @@ export class CheckerService {
       return this.startStandardCheck(data.reservation, data.data);
     });
 
-    const checkResults = await fetchInBatch(
-      checkPromises,
-      Number(environment.BATCH_SIZE) || 3
-    );
-
-    console.log(checkResults);
-
+    const checkResults = await Promise.all(checkPromises);
     return { status: 200, message: 'OK', checkResults };
   }
 
@@ -178,31 +167,31 @@ export class CheckerService {
     documents: AttachedDocuments[]
   ): Promise<any> {
     const downloadPromises = documents.map((document) =>
-      this.frontService.downloadFile(
-        document.downloadUrl,
-        `${
-          document.sourceId || 'invalid-rsrv-id'
-        }-document-${new Date().getTime()}`
-      )
+      downloaderQueue.addRequest(async () => {
+        this.frontService.downloadFile(
+          document.downloadUrl,
+          `${
+            document.sourceId || 'invalid-rsrv-id'
+          }-document-${new Date().getTime()}`
+        );
+      })
     );
 
-    const downloadResults = await fetchInBatch(
-      downloadPromises,
-      Number(environment.BATCH_SIZE) || 3
-    );
+    try {
+      const downloads = await Promise.all(downloadPromises);
 
-    // const downloadResults = await Promise.all(downloadPromises);
-    const downloads: any = await lastValueFrom(forkJoin(downloadResults));
+      // classify them
+      const successfulDownloads = downloads.filter(
+        (download: any) => download.success
+      );
+      const errorDownloads = downloads.filter(
+        (download: any) => !download.success
+      );
 
-    // classify them
-    const successfulDownloads = downloads.filter(
-      (download: any) => download.success
-    );
-    const errorDownloads = downloads.filter(
-      (download: any) => !download.success
-    );
-
-    return { successfulDownloads, errorDownloads };
+      return { successfulDownloads, errorDownloads };
+    } catch (error) {
+      console.log(`Failed downloading attached documents: ${error}`);
+    }
   }
 
   private async getMainCoupon(
@@ -271,12 +260,7 @@ export class CheckerService {
       return this.ledgerService.getLedgerTransactions(ledger);
     });
 
-    // load transaction for each ledger
-    const transactions = await fetchInBatch(
-      ledgerTransactionsPromises,
-      Number(environment.BATCH_SIZE) | 3
-    );
-    // const transactions = await Promise.all(ledgerTransactionsPromises);
+    const transactions = await Promise.all(ledgerTransactionsPromises);
     ledgers.forEach((ledger, index) => {
       ledger.transactions = transactions[index];
     });

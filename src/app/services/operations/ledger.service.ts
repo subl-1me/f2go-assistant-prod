@@ -2,10 +2,9 @@ import { Injectable } from '@angular/core';
 import Ledger from '../../models/Ledger';
 import { environment } from '../../../environment';
 import { FrontService } from '../front-service';
-import Reservation from '../../models/Reservation';
 import Transaction from '../../models/Transaction';
-import { HttpParams } from '@angular/common/http';
 import { ReservationService } from './reservation.service';
+import { ledgerQueue } from '../../utils/queues';
 
 @Injectable({
   providedIn: 'root',
@@ -16,38 +15,47 @@ export class LedgerService {
     private reservationService: ReservationService
   ) {}
 
-  public getReservationledger(reservationId: string): Promise<Ledger[]> {
+  public async getReservationledger(reservationId: string): Promise<Ledger[]> {
     const API_URI = environment.FRONT_API_GET_RSRV_LEDGERS.replace(
       '{idField}',
       reservationId
     ).replace('{propName}', environment.PROP_NAME);
 
-    return new Promise<Ledger[]>((resolve, reject) => {
-      this.frontService.getRequest(API_URI).subscribe({
-        next: (response) => {
-          if (response.status === 401) {
-            reject('Authentication error.');
-          } else {
+    const task = async () => {
+      return new Promise<any>((resolve, reject) => {
+        this.frontService.getRequest(API_URI).subscribe({
+          next: (response) => {
             const items = JSON.parse(response);
-            resolve(
-              items.map((item: any, index: number): Ledger => {
-                return {
-                  reservationId,
-                  ledgerNo: item.numFolio,
-                  isPrincipal: index === 0,
-                  status: item.folioStatus,
-                  balance: item.folioBalance,
-                  isBalanceCredit: item.balance < 0,
-                  transactions: [],
-                  isInvoiced: false,
-                };
-              })
-            );
-          }
-        },
-        error: (err) => reject(err),
+            const ledgers = items.map((item: any, index: number): Ledger => {
+              return {
+                reservationId,
+                ledgerNo: item.numFolio,
+                isPrincipal: index === 0,
+                status: item.folioStatus,
+                balance: item.folioBalance,
+                isBalanceCredit: item.balance < 0,
+                transactions: [],
+                isInvoiced: false,
+              };
+            });
+            resolve({ error: false, ledgers });
+          },
+          error: (err) => reject(err),
+        });
       });
-    });
+    };
+
+    try {
+      const taskResult = await ledgerQueue.addRequest(task);
+      if (taskResult.error || !taskResult.ledgers) {
+        return [];
+      }
+
+      return taskResult.ledgers;
+    } catch (err) {
+      console.log('Failed to fetch ledger: ', err);
+      return [];
+    }
   }
 
   public async getLedgerTransactions(ledger: Ledger): Promise<Transaction[]> {
@@ -169,8 +177,9 @@ export class LedgerService {
 
       // TODO: calculate how many nights the pymtn cover
       // Check if current night is paid
-      const appDate = '2025/08/04';
+      const appDate = '2025/08/23';
       const todayRate = rates.find((rate) => rate.date === appDate);
+      console.log(rates);
       if (!todayRate) {
         ledgersStatus.error = true;
         ledgersStatus.errors.push({ message: 'Today rate not found.' });

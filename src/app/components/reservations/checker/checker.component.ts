@@ -23,7 +23,6 @@ export class CheckerComponent {
   public inHouseReservations: Reservation[];
   public displaydReservations: Reservation[];
   public selectedReservations: Reservation[];
-  public reservations: Reservation[];
   public isLoadingInHouseReservations: boolean;
   public allSelected: boolean = false;
   public searchTerm: string;
@@ -39,7 +38,6 @@ export class CheckerComponent {
     this.selectedReservations = [];
     this.showModal = false;
     this.isLoadingInHouseReservations = true;
-    this.reservations = [];
     this.searchTerm = '';
     this.displaydReservations = [];
     this.getInHouseReservations();
@@ -48,8 +46,9 @@ export class CheckerComponent {
 
   async getInHouseReservations() {
     this.isLoadingInHouseReservations = true;
-    this.reservations = await this.reservationService.getInHouseReservations();
-    this.displaydReservations = [...this.reservations];
+    this.inHouseReservations =
+      await this.reservationService.getInHouseReservations();
+    this.displaydReservations = [...this.inHouseReservations];
     this.isLoadingInHouseReservations = false;
   }
 

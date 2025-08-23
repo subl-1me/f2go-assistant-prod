@@ -1,13 +1,10 @@
-import { EnvironmentInjector, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { VirtualCreditCard } from '../../models/VirtualCreditCard';
 import {
   BONVOY_CERTIFICATE,
-  COUPON,
-  DEFAULT_PREPAID_PROVIDER,
   DEFAULT_PREPAID_TYPE,
   DEFAULT_VCC_PROVIDER,
   DEFAULT_VCC_TYPE,
-  DOCUMENT_TYPE_COUPON,
   VIRTUAL_CREDIT_CARD,
 } from '../../const';
 import { ReservationService } from './reservation.service';
@@ -15,13 +12,11 @@ import Extractor from '../../Extractor';
 import { FrontService } from '../front-service';
 import { environment } from '../../../environment';
 import { HttpParams } from '@angular/common/http';
-import { lastValueFrom, map, forkJoin } from 'rxjs';
+import { lastValueFrom, map } from 'rxjs';
 import { DocumentAnalyzerService } from '../document-analyzer.service';
-import AttachedDocuments from '../../models/AttachedDocuments';
 import PrePaidMethod from '../../models/PrePaidMethod';
 import BonvoyCertificate from '../../models/BonvoyCertificate';
-import Coupon from '../../models/Coupon';
-import { fetchInBatch } from '../../utils/fetch.util';
+import { prePaidQueue } from '../../utils/queues';
 
 @Injectable({
   providedIn: 'root',
@@ -43,33 +38,32 @@ export class PrepaidService {
       data: null,
     };
 
-    const prepaidPromisesArray = [
-      this.getVirtualCard(reservationId),
-      this.getBonvoyCertificateId(reservationId),
-    ];
+    try {
+      const getVCCTask = prePaidQueue.addRequest(
+        async () => await this.getVirtualCard(reservationId)
+      );
+      const getCertificateTask = prePaidQueue.addRequest(
+        async () => await this.getBonvoyCertificateId(reservationId)
+      );
 
-    const results = await fetchInBatch(
-      prepaidPromisesArray,
-      Number(environment.BATCH_SIZE) | 3
-    );
+      const [VCCData, certificateData] = await Promise.all([
+        getVCCTask,
+        getCertificateTask,
+      ]);
 
-    console.log(results);
+      if (VCCData && VCCData.isValid) {
+        prepaidMethod.data = VCCData;
+        prepaidMethod.type = VIRTUAL_CREDIT_CARD;
+      }
 
-    const virtualCreditCard = results[0];
-    const bonvoyCertificate = results[1];
-
-    if (
-      virtualCreditCard.type !== DEFAULT_VCC_PROVIDER &&
-      virtualCreditCard.isValid
-    ) {
-      prepaidMethod.data = virtualCreditCard;
-      prepaidMethod.type = VIRTUAL_CREDIT_CARD;
+      if (certificateData && certificateData.code !== null) {
+        prepaidMethod.data = certificateData;
+        prepaidMethod.type = BONVOY_CERTIFICATE;
+      }
+    } catch (err) {
+      console.log(`Failed to fetch prepaid methods: ${err}`);
     }
 
-    if (typeof bonvoyCertificate === 'string') {
-      prepaidMethod.data = bonvoyCertificate;
-      prepaidMethod.type = BONVOY_CERTIFICATE;
-    }
     return prepaidMethod;
   }
 
@@ -129,45 +123,5 @@ export class PrepaidService {
     } catch (err) {
       return bonvoyCertificate;
     }
-  }
-
-  private async getCoupon(reservationId: string): Promise<Coupon> {
-    let coupon: Coupon = {
-      sourceReservation: reservationId,
-      provider: DEFAULT_PREPAID_PROVIDER,
-      isValid: false,
-    };
-
-    const attachedDocuments: AttachedDocuments[] =
-      await this.reservationService.getAttachedDocuments(reservationId);
-
-    if (attachedDocuments.length < 0) {
-      return coupon;
-    }
-
-    // download each document & analyze them to determine which are coupons
-    const downloadDocsPromises = attachedDocuments.map((document) =>
-      // this.frontService.postRequest(document.downloadUrl)
-      this.frontService.downloadFile(
-        document.downloadUrl,
-        `${reservationId}-document-${new Date().getTime()}`
-      )
-    );
-
-    const downloads = await lastValueFrom(forkJoin(downloadDocsPromises));
-    const success = downloads.filter((download) => download.success);
-
-    // analyze each document
-    const analyzerPromises = success.map((document) =>
-      this.documentAnalyzerService.analyze(document.path)
-    );
-
-    const analyzerResponses = await Promise.all(analyzerPromises);
-
-    const couponResponses = analyzerResponses.filter(
-      (response) => response.classification === DOCUMENT_TYPE_COUPON
-    );
-
-    return coupon;
   }
 }

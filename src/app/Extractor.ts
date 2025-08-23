@@ -1,6 +1,5 @@
 import NotesByUser from './models/NotesByUser';
 import VCCProvidersPatterns from './models/VCCProvidersPatterns';
-import { VirtualCreditCard } from './models/VirtualCreditCard';
 import { VCC_PROVIDERS_PATTERN_LIST } from './Patterns';
 
 export default class Extractor {
