@@ -9,5 +9,6 @@ export default interface StandardCheckResult {
   lastCheck: Date;
   checkAgainAt?: Date | string;
   prePaidMethod?: PrePaidMethod;
+  activeCoupons?: any[];
   ledgersStatus: any;
 }

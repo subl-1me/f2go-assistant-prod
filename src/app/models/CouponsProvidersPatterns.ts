@@ -1,10 +1,11 @@
-export default interface CouponsProvidersPatterns {
+interface CouponsProvidersPatterns {
   CORPORATE_TRAVEL_SERVICES: Patterns;
   GBT_TRAVEL_SERVICES: Patterns;
   VIAJES_EL_CORTE_INGLES: Patterns;
   BAUSER: Patterns;
   CITY_ACCESS: Patterns;
   BCD_TRAVEL: Patterns;
+  NOKTOS: Patterns;
 }
 
 interface Patterns {
@@ -20,3 +21,5 @@ interface Patterns {
   BASE_RATE?: RegExp;
   TOTAL_AMOUNT?: RegExp;
 }
+
+export default CouponsProvidersPatterns;

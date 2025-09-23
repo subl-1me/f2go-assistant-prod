@@ -44,3 +44,6 @@ Thumbs.db
 # secrets
 src/environment.ts
 /temp/*
+
+# testing
+extraction-results.json

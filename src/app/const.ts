@@ -48,6 +48,10 @@ export const CORPORATE_TRAVEL_SERVICES = 'CORPORATE_TRAVEL_SERVICES';
 export const GBT_TRAVEL_SERVICES = 'GBT_TRAVEL_SERVICES';
 export const VIAJES_EL_CORTE_INGLES = 'VIAJES_EL_CORTE_INGLES';
 export const BCD_TRAVEL = 'BCD_TRAVEL';
+export const NOKTOS = 'NOKTOS';
+
+// Misc documents declarations
+export const RFC_DOCUMENT_SIGNATURE = 'CONSTANCIA DE SITUACIÓN FISCAL';
 
 // utils
 export const ROOM_TYPES = ['Double', 'Single', 'Suite'];

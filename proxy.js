@@ -475,7 +475,14 @@ app.post("/download", express.json(), async (req, res) => {
 
 app.post("/extract-pdf-text", express.json(), async (req, res) => {
   try {
-    const { path } = req.body;
+    const path = req.body.path;
+    if (!path) {
+      return res
+        .status(400)
+        .send({ error: true, message: "PDF path is required." });
+    }
+
+    console.log(`[PDF-EXTRACT] Extracting text from PDF: ${path}`);
     const pdfBuffer = fs.readFileSync(path);
     const data = await pdf(pdfBuffer);
     return res.send({ status: 200, text: data.text });

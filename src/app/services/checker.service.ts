@@ -23,6 +23,10 @@ import { FrontService } from './front-service';
 import AttachedDocuments from '../models/AttachedDocuments';
 import { DocumentAnalyzerService } from './document-analyzer.service';
 import { downloaderQueue } from '../utils/queues';
+import { LocalDatabaseService } from './local-database.service';
+import { lastValueFrom } from 'rxjs';
+import CouponDataExtraction from '../shared/coupon-extractions';
+import Comparation from '../models/Comparation';
 
 @Injectable({
   providedIn: 'root',
@@ -37,7 +41,10 @@ export class CheckerService {
   ) {}
 
   public async performChecker(reservations: Reservation[]): Promise<any> {
+    // create DB to save local cache
+
     // first load reservation ledgers, documents, VCC, notes, rates & helpful stuff
+
     const loadReservationDataPromises = reservations.map((reservation) => {
       return this.collectReservationData(reservation);
     });
@@ -69,7 +76,7 @@ export class CheckerService {
       lastCheck: new Date(),
     };
 
-    const { ledgers, prePaidMethod, documents } = collectedData;
+    const { documents, ledgers, prePaidMethod } = collectedData;
 
     // if has documents, classify them
     if (documents && documents.length > 0) {
@@ -81,33 +88,45 @@ export class CheckerService {
           successfulDownloads
         );
 
-        console.log(classifiedDocuments);
         const { unsupported, coupons } = classifiedDocuments;
-        if (coupons.length > 0) {
-          // find main coupon
-          const { validCoupons, invalidCoupons, mainCoupon } =
-            await this.getMainCoupon(coupons, reservation);
 
-          if (mainCoupon) {
-            checkResult.paymentStatus = PAYMENT_STATUS_PREPAID;
-            const [year, month, day] = reservation.dateOut
-              .split('/')
-              .map(Number);
-            const dateOut = new Date(year, month - 1, day);
-            checkResult.checkAgainAt = dateOut;
-            checkResult.prePaidMethod = {
-              type: COUPON,
-              data: {
-                provider: mainCoupon.provider,
-                isValid: true,
-                sourceReservation: reservation.id,
-                comparation: mainCoupon.comparation,
-                priority: mainCoupon.priority,
-              },
+        // read & extract coupons data
+        const detailedCoupons = coupons.map((coupon: any) => {
+          const extraction = this.documentAnalyzerService.extract(
+            coupon.provider,
+            coupon.text
+          );
+          return {
+            ...coupon,
+            extraction,
+          };
+        });
+
+        // compare coupon data to reservation data
+        const comparations = detailedCoupons.map((coupon: any) => {
+          const comparation = this.documentAnalyzerService.compare(
+            reservation,
+            coupon.extraction
+          );
+          return {
+            ...coupon,
+            comparation,
+          };
+        });
+
+        checkResult.activeCoupons = comparations.map(
+          (couponData: any, index: number) => {
+            return {
+              sourceReservation: reservation.id,
+              error: couponData.error,
+              extraction: couponData.extraction,
+              comparation: couponData.comparation,
+              provider: couponData.provider,
+              type: couponData.type,
+              priority: coupons[index].provider === ACCESS ? 1 : 2,
             };
           }
-        }
-        checkResult.documents.push(...unsupported);
+        );
       }
     }
 
@@ -125,6 +144,29 @@ export class CheckerService {
       const [year, month, day] = reservation.dateOut.split('/').map(Number);
       const dateOut = new Date(year, month - 1, day);
       checkResult.checkAgainAt = dateOut;
+    }
+
+    if (checkResult.activeCoupons && checkResult.activeCoupons.length > 0) {
+      const mainCoupon = checkResult.activeCoupons.reduce((max, coupon) =>
+        coupon.overallSimilarity > max.overallSimilarity ? coupon : max
+      );
+      if (mainCoupon) {
+        checkResult.paymentStatus = PAYMENT_STATUS_PREPAID;
+        checkResult.prePaidMethod = {
+          type: COUPON,
+          data: {
+            sourceReservation: mainCoupon.sourceReservation,
+            provider: mainCoupon.provider,
+            isValid: true,
+            couponExtraction: mainCoupon.extraction,
+            comparation: mainCoupon.comparation,
+            priority: mainCoupon.priority,
+          },
+        };
+        const [year, month, day] = reservation.dateOut.split('/').map(Number);
+        const dateOut = new Date(year, month - 1, day);
+        checkResult.checkAgainAt = dateOut;
+      }
     }
 
     const {
@@ -168,11 +210,13 @@ export class CheckerService {
   ): Promise<any> {
     const downloadPromises = documents.map((document) =>
       downloaderQueue.addRequest(async () => {
-        this.frontService.downloadFile(
-          document.downloadUrl,
-          `${
-            document.sourceId || 'invalid-rsrv-id'
-          }-document-${new Date().getTime()}`
+        return lastValueFrom(
+          this.frontService.downloadFile(
+            document.downloadUrl,
+            `${
+              document.sourceId || 'invalid-rsrv-id'
+            }-document-${new Date().getTime()}`
+          )
         );
       })
     );
@@ -191,45 +235,12 @@ export class CheckerService {
       return { successfulDownloads, errorDownloads };
     } catch (error) {
       console.log(`Failed downloading attached documents: ${error}`);
+      throw new Error(
+        error instanceof Error
+          ? error.message
+          : `Error downloading documents: ${error}`
+      );
     }
-  }
-
-  private async getMainCoupon(
-    coupons: any[],
-    reservation: Reservation
-  ): Promise<any> {
-    // compare each coupon with reservation data
-    const couponPromises = coupons.map((coupon) =>
-      this.documentAnalyzerService.compare(reservation, coupon.data)
-    );
-    const couponResults = await Promise.all(couponPromises);
-
-    // best similarity is 0.8
-    // filter coupons with similarity >= 0.8
-    const validCoupons = couponResults
-      .filter((result) => result.overallSimilarity >= 0.8)
-      .map((comparation, index) => {
-        return {
-          provider: coupons[index].provider,
-          isValid: true,
-          sourceReservation: reservation.id,
-          comparation: comparation,
-          priority: coupons[index].provider === ACCESS ? 2 : 1,
-        };
-      });
-
-    const invalidCoupons = couponResults.filter(
-      (result) => result.overallSimilarity < 0.8
-    );
-
-    // sort valid coupons by priority
-    validCoupons.sort((a, b) => a.priority - b.priority);
-
-    return {
-      validCoupons,
-      invalidCoupons,
-      mainCoupon: validCoupons[0] || null,
-    };
   }
 
   // classify documents & compare them with reservation data

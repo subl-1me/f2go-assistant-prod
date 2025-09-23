@@ -3,6 +3,7 @@ export default interface Comparation {
   guestName: similarity;
   checkIn: similarity;
   checkOut: similarity;
+  reservationId: similarity;
   overallSimilarity: number;
 }
 
