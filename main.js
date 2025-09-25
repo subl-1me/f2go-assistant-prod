@@ -1,6 +1,6 @@
 const { app, BrowserWindow } = require("electron/main");
 const path = require("node:path");
-const { initDatabases, write } = require("./localDatabase");
+const { initDatabases, write, read } = require("./localDatabase");
 const { ipcMain } = require("electron");
 
 const createWindow = async () => {
@@ -41,6 +41,15 @@ ipcMain.handle("init-db", async () => {
 ipcMain.handle("write", async (event, data) => {
   try {
     return await write(data);
+  } catch (err) {
+    console.log(err);
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle("read", async (event) => {
+  try {
+    return await read();
   } catch (err) {
     console.log(err);
     return { success: false, error: err.message };

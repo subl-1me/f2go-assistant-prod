@@ -34,7 +34,6 @@ export const initDatabases = async () => {
 };
 
 export const write = async (data) => {
-  console.log(data);
   return new Promise((resolve, reject) => {
     try {
       const stmt = checkerDb.prepare(
@@ -60,6 +59,15 @@ export const write = async (data) => {
     } catch (err) {
       reject(err);
     }
+  });
+};
+
+export const read = async () => {
+  return new Promise((resolve, reject) => {
+    checkerDb.all("SELECT * FROM cache", [], (err, rows) => {
+      if (err) return reject(err);
+      resolve(rows);
+    });
   });
 };
 

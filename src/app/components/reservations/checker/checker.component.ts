@@ -12,6 +12,7 @@ import { FormsModule } from '@angular/forms';
 import { CheckerService } from '../../../services/checker.service';
 import { BackgroundProcessServiceService } from '../../../services/background-process-service.service';
 import { ReservationService } from '../../../services/operations/reservation.service';
+import StandardCheckResult from '../../../models/StandardCheckResult';
 
 @Component({
   selector: 'app-checker',
@@ -29,6 +30,8 @@ export class CheckerComponent {
   public showModal: boolean;
   public isChecking: boolean;
 
+  public lastCheckerResults: StandardCheckResult[] = [];
+
   constructor(
     private checkerService: CheckerService,
     private backgroundProcessService: BackgroundProcessServiceService,
@@ -42,6 +45,27 @@ export class CheckerComponent {
     this.displaydReservations = [];
     this.getInHouseReservations();
     this.isChecking = false;
+
+    this.loadCache();
+  }
+
+  private async loadCache(): Promise<void> {
+    const data = await window.electron.ipcRenderer.invoke('read');
+    this.lastCheckerResults = data.map((result: any) => {
+      return {
+        reservation: JSON.parse(result.reservation),
+        documents: JSON.parse(result.documents),
+        paymentStatus: result.paymentStatus,
+        checkStatus: result.checkStatus,
+        lastCheck: result.lastCheck,
+        checkAgainAt: result.checkAgainAt,
+        prePaidMethod: JSON.parse(result.prePaidMethod),
+        activeCoupons: JSON.parse(result.activeCoupons),
+        ledgersStatus: JSON.parse(result.ledgersStatus),
+      } as StandardCheckResult;
+    });
+
+    console.log(this.lastCheckerResults);
   }
 
   async getInHouseReservations() {
@@ -80,6 +104,33 @@ export class CheckerComponent {
 
   async cancelOperation() {
     this.isChecking = false;
+  }
+
+  public isReservationChecked(reservationId: string): boolean {
+    if (!reservationId) {
+      return false;
+    }
+
+    return this.lastCheckerResults.find(
+      (result) => result.reservation.id === reservationId
+    )
+      ? true
+      : false;
+  }
+
+  public getLastCheck(reservationId: string): Date | null {
+    if (!reservationId) {
+      return null;
+    }
+
+    const result = this.lastCheckerResults.find(
+      (result) => result.reservation.id === reservationId
+    );
+    if (!result) {
+      return null;
+    }
+
+    return result.lastCheck;
   }
 
   filterReservations() {
