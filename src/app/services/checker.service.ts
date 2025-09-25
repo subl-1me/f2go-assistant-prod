@@ -60,6 +60,7 @@ export class CheckerService {
     });
 
     const checkResults = await Promise.all(checkPromises);
+
     return { status: 200, message: 'OK', checkResults };
   }
 

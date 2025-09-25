@@ -4,6 +4,18 @@ import { SidebarComponent } from './components/sidebar/sidebar.component';
 import { AuthService } from './services/auth.service';
 import { NgIf } from '@angular/common';
 
+declare global {
+  interface Window {
+    electron: {
+      ipcRenderer: {
+        invoke(channel: string, ...args: any[]): Promise<any>;
+        send(channel: string, ...args: any[]): void;
+        on(channel: string, listener: (...args: any[]) => void): void;
+      };
+    };
+  }
+}
+
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet, SidebarComponent, NgIf],
@@ -18,7 +30,11 @@ export class AppComponent implements OnInit {
     this.isAuth = this.authService.isAuthenticated();
   }
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
+    //init DB
+    console.log('initializing db...');
+    await window.electron.ipcRenderer.invoke('init-db');
+
     this.authService.isAuthenticated$.subscribe((auth) => {
       this.isAuth = auth;
     });

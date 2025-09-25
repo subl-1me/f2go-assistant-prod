@@ -1,12 +1,16 @@
 const { app, BrowserWindow } = require("electron/main");
 const path = require("node:path");
+const { initDatabases, write } = require("./localDatabase");
+const { ipcMain } = require("electron");
 
 const createWindow = async () => {
   const win = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 1280,
+    height: 720,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
+      nodeIntegration: false,
+      contextIsolation: true,
     },
   });
 
@@ -27,5 +31,18 @@ app.whenReady().then(() => {
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();
+  }
+});
+
+ipcMain.handle("init-db", async () => {
+  return await initDatabases();
+});
+
+ipcMain.handle("write", async (event, data) => {
+  try {
+    return await write(data);
+  } catch (err) {
+    console.log(err);
+    return { success: false, error: err.message };
   }
 });

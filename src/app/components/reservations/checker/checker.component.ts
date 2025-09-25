@@ -67,8 +67,14 @@ export class CheckerComponent {
       this.selectedReservations
     );
 
-    console.log(checkerResponse);
+    // save results to db
+    const saveToDBPromises = checkerResponse.checkResults.map(
+      async (result: any) => {
+        return await window.electron.ipcRenderer.invoke('write', result);
+      }
+    );
 
+    await Promise.all(saveToDBPromises);
     this.isChecking = false;
   }
 
