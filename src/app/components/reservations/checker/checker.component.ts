@@ -64,8 +64,6 @@ export class CheckerComponent {
         ledgersStatus: JSON.parse(result.ledgersStatus),
       } as StandardCheckResult;
     });
-
-    console.log(this.lastCheckerResults);
   }
 
   async getInHouseReservations() {

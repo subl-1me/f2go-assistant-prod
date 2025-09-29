@@ -5,8 +5,8 @@ const { ipcMain } = require("electron");
 
 const createWindow = async () => {
   const win = new BrowserWindow({
-    width: 1280,
-    height: 720,
+    width: 1920,
+    height: 1080,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       nodeIntegration: false,
