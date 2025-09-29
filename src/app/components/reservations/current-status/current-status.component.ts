@@ -78,4 +78,13 @@ export class CurrentStatusComponent implements OnInit {
       } as StandardCheckResult;
     });
   }
+
+  public async refreshReservationsCache(): Promise<void> {
+    return await this.loadCache();
+  }
+
+  public async removeCurrentCache(): Promise<void> {
+    await window.electron.ipcRenderer.invoke('removeReservationsCache');
+    this.lastCheckerResults = [];
+  }
 }

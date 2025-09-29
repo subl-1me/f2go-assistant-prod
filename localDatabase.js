@@ -99,3 +99,16 @@ const createRsrvsCheckerTables = async () => {
     );
   });
 };
+
+export const removeReservationsCache = async () => {
+  return new Promise((resolve, reject) => {
+    try {
+      const stmt = checkerDb.prepare(`DELETE FROM cache;`);
+      stmt.run();
+      stmt.finalize();
+      resolve();
+    } catch (err) {
+      reject(err);
+    }
+  });
+};

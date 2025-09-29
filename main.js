@@ -1,6 +1,11 @@
 const { app, BrowserWindow } = require("electron/main");
 const path = require("node:path");
-const { initDatabases, write, read } = require("./localDatabase");
+const {
+  initDatabases,
+  write,
+  read,
+  removeReservationsCache,
+} = require("./localDatabase");
 const { ipcMain } = require("electron");
 
 const createWindow = async () => {
@@ -50,6 +55,15 @@ ipcMain.handle("write", async (event, data) => {
 ipcMain.handle("read", async (event) => {
   try {
     return await read();
+  } catch (err) {
+    console.log(err);
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle("removeReservationsCache", async (event) => {
+  try {
+    return await removeReservationsCache();
   } catch (err) {
     console.log(err);
     return { success: false, error: err.message };
