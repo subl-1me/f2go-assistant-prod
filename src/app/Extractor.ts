@@ -118,4 +118,15 @@ export default class Extractor {
     }
     return rateCode;
   }
+
+  public extractReservationRouting(text: string): any {
+    const getRoutingPattern = new RegExp(`\\bitemArray\\s*=\\s*"(.*?)"`);
+    const match = text.match(getRoutingPattern);
+    if (!match) {
+      return [];
+    }
+    const itemArrayParsed = match[1].replace(/\\u0022/g, `"`);
+    const routings = JSON.parse(itemArrayParsed);
+    return routings;
+  }
 }

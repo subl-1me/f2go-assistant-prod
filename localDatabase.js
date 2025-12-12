@@ -38,8 +38,8 @@ export const write = async (data) => {
     try {
       const stmt = checkerDb.prepare(
         `
-      INSERT INTO cache (reservation, checkStatus, paymentStatus, documents, ledgersStatus, lastCheck, prePaidMethod, activeCoupons, checkAgainAt)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      INSERT INTO cache (reservation, checkStatus, paymentStatus, documents, ledgersStatus, lastCheck, prePaidMethod, activeCoupons, checkAgainAt, routing)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       );
 
       stmt.run(
@@ -51,7 +51,8 @@ export const write = async (data) => {
         data.lastCheck,
         JSON.stringify(data.prePaidMethod || {}),
         JSON.stringify(data.activeCoupons || []),
-        data.checkAgainAt
+        data.checkAgainAt,
+        JSON.stringify(data.routing || {})
       );
 
       stmt.finalize();
@@ -85,6 +86,7 @@ const createRsrvsCheckerTables = async () => {
           activeCoupons TEXT NOT NULL,
           lastCheck DATE NOT NULL,
           prePaidMethod TEXT NOT NULL,
+          routing TEXT NOT NULl,
           checkAgainAt DATE NOT NULL
         )
       `,

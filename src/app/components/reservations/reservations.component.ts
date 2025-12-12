@@ -4,6 +4,8 @@ import { CurrentStatusComponent } from './current-status/current-status.componen
 import { CheckerComponent } from './checker/checker.component';
 import { RoutingsComponent } from './routings/routings.component';
 import { AutoAssignRoomsComponent } from './auto-assign-rooms/auto-assign-rooms.component';
+import { ReservationService } from '../../services/operations/reservation.service';
+import { resolve } from 'path';
 
 @Component({
   selector: 'app-reservations',
@@ -23,6 +25,8 @@ export class ReservationsComponent {
   isRoutingCardCollapsed = true;
   isAutoAssignCardCollapsed = true;
 
+  public constructor(private reservationService: ReservationService) {}
+
   public toggleCurrentCardCollapse(): void {
     this.isCurrentCardCollapsed = !this.isCurrentCardCollapsed;
   }
@@ -37,5 +41,32 @@ export class ReservationsComponent {
 
   public toggleAutoAssignCardCollapse(): void {
     this.isAutoAssignCardCollapsed = !this.isAutoAssignCardCollapsed;
+  }
+
+  public async deleteFuturePreassignments(): Promise<void> {
+    const futureReservations =
+      await this.reservationService.getAllHistoricalReservations();
+
+    const reservationsWithPreassignments = futureReservations.filter(
+      (reservation) => reservation.room !== ''
+    );
+
+    // unassign rooms
+    const facades = reservationsWithPreassignments.map((reservation) =>
+      this.reservationService.getReservationFacade(
+        reservation.id,
+        reservation.room
+      )
+    );
+
+    const results = reservationsWithPreassignments.map((reservation) =>
+      this.reservationService.removeRoomPreassignment(
+        reservation.id,
+        reservation.room
+      )
+    );
+
+    const resolvedResults = await Promise.all(results);
+    console.log('Unassigned rooms for reservations:', resolvedResults);
   }
 }

@@ -35,6 +35,8 @@ export const PAYMENT_STATUS_TODAY_PAID = 'TODAY_PAID';
 export const PAYMENT_STATUS_PARTIAL = 'PARTIAL';
 export const PAYMENT_STATUS_ERROR = 'ERROR';
 export const PAYMENT_STATUS_PREPAID = 'PREPAID';
+export const PAYMENT_STATUS_MASTER = 'MASTER';
+export const PAYMENT_STATUS_ROUTED = 'ROUTED';
 
 // Checker status
 export const CHECKER_STATUS_PENDING = 'PENDING';

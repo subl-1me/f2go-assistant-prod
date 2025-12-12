@@ -12,9 +12,11 @@ import {
   DOCUMENT_TYPE_UNSUPORTED,
   PAYMENT_STATUS_ERROR,
   PAYMENT_STATUS_FULLY_PAID,
+  PAYMENT_STATUS_MASTER,
   PAYMENT_STATUS_PARTIAL,
   PAYMENT_STATUS_PENDING,
   PAYMENT_STATUS_PREPAID,
+  PAYMENT_STATUS_ROUTED,
   PAYMENT_STATUS_TODAY_PAID,
 } from '../const';
 import { ReservationService } from './operations/reservation.service';
@@ -27,6 +29,8 @@ import { LocalDatabaseService } from './local-database.service';
 import { lastValueFrom } from 'rxjs';
 import CouponDataExtraction from '../shared/coupon-extractions';
 import Comparation from '../models/Comparation';
+import { Route } from '@angular/router';
+import Routing from '../models/Routing';
 
 @Injectable({
   providedIn: 'root',
@@ -77,7 +81,7 @@ export class CheckerService {
       lastCheck: new Date(),
     };
 
-    const { documents, ledgers, prePaidMethod } = collectedData;
+    const { documents, ledgers, prePaidMethod, routings } = collectedData;
 
     // if has documents, classify them
     if (documents && documents.length > 0) {
@@ -202,6 +206,27 @@ export class CheckerService {
       checkResult.checkAgainAt = dateOut;
     }
 
+    if (routings.length > 0) {
+      const routing = routings[0];
+      checkResult.routing = routing;
+      checkResult.paymentStatus = routing.isParent
+        ? PAYMENT_STATUS_MASTER
+        : PAYMENT_STATUS_ROUTED;
+      if (routing.isParent) {
+        const routingCheck = await this.checkRouting(routing);
+        if (checkResult.routing) {
+          checkResult.routing.check = {
+            diff: routingCheck.diff,
+            totalPaid: routingCheck.totalPaid,
+            totalToPay: routingCheck.totalToPay,
+            success: routingCheck.success,
+            message: routingCheck.message ? routingCheck.message : '',
+          };
+        }
+      }
+      checkResult.checkAgainAt = reservation.dateOut;
+    }
+
     checkResult.checkStatus = CHECKER_STATUS_CHECKED;
     return checkResult;
   }
@@ -266,6 +291,7 @@ export class CheckerService {
     const ledgers = await this.ledgerService.getReservationledger(
       reservation.id
     );
+    reservation.ledgers = ledgers;
 
     // load ledgers transactions
     const ledgerTransactionsPromises = ledgers.map((ledger) => {
@@ -287,10 +313,81 @@ export class CheckerService {
       reservation.id
     );
 
+    // search for routings
+    const routings = await this.reservationService.getRouting(reservation);
+
     return {
       ledgers,
       prePaidMethod,
       documents,
+      routings,
     };
+  }
+
+  private async checkRouting(routing: Routing): Promise<any> {
+    const reservations = await this.reservationService.getInHouseReservations();
+    const master = reservations.find(
+      (reservation) => reservation.id === routing.parentId
+    );
+    const childs = reservations.filter((reservation) =>
+      routing.childs?.includes(reservation.id)
+    );
+
+    if (!master) {
+      return { success: false, error: 'Master reservation not found.' };
+    }
+
+    if (!childs || childs.length === 0) {
+      return { success: false, error: 'Routing has no child reservations.' };
+    }
+
+    // get total payment in master reservation
+    const masterLedgers = await this.ledgerService.getReservationledger(
+      master.id
+    );
+
+    const targetLedger = masterLedgers.find(
+      (ledger) => ledger.ledgerNo === routing.parentLedgerTarget
+    );
+    if (!targetLedger) {
+      return { success: false, error: 'Routing target ledger not found.' };
+    }
+
+    const targetLedgerTransactions =
+      await this.ledgerService.getLedgerTransactions(targetLedger);
+
+    const paymentSum = targetLedgerTransactions.reduce((accum, current) => {
+      if (current.type === 'PAYMENT') {
+        return (accum += Math.abs(current.amount));
+      }
+      return accum;
+    }, 0);
+
+    // get total from each reservation
+    let totalToPay = 0;
+
+    const masterRates = await this.reservationService.getReservationRates(
+      master.id
+    );
+    const masterTotalToPay = masterRates.reduce((accum, current) => {
+      return (accum += current.amount);
+    }, 0);
+    totalToPay += masterTotalToPay;
+
+    for (const child of routing.childs || []) {
+      const rates = await this.reservationService.getReservationRates(child);
+      totalToPay += rates.reduce((accum, current) => {
+        return (accum += Math.abs(current.amount));
+      }, 0);
+
+      return {
+        success: true,
+        totalToPay,
+        totalPaid: paymentSum,
+        diff: Number(
+          parseFloat((paymentSum - totalToPay).toString()).toFixed(2)
+        ),
+      };
+    }
   }
 }

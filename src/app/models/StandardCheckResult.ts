@@ -1,5 +1,6 @@
 import PrePaidMethod from './PrePaidMethod';
 import Reservation from './Reservation';
+import Routing from './Routing';
 
 export default interface StandardCheckResult {
   reservation: Reservation;
@@ -11,4 +12,5 @@ export default interface StandardCheckResult {
   prePaidMethod?: PrePaidMethod;
   activeCoupons?: any[];
   ledgersStatus: any;
+  routing?: Routing;
 }
