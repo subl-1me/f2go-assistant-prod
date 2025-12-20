@@ -51,18 +51,21 @@ export class FrontService {
     requiresAuth?: boolean,
     params?: HttpParams
   ): Observable<any> {
+    const authHeaders = new HttpHeaders()
+      .set(
+        'Authorization',
+        `Bearer ${localStorage.getItem('bearerToken') || ''}`
+      )
+      .set(
+        'RequestVerificationToken',
+        localStorage.getItem('verificationToken') || ''
+      );
     return this.http
       .post(`${environment.proxy}`, data || {}, {
         observe: 'response',
         responseType: 'text', // Asegúrate de que el servidor envíe HTML como texto
         withCredentials: true,
-        headers: requiresAuth
-          ? new HttpHeaders({
-              Authorization: `Bearer ${
-                localStorage.getItem('bearerToken') || ''
-              }`,
-            })
-          : {},
+        headers: requiresAuth ? authHeaders : {},
         params: params
           ? new HttpParams().set('url', `${apiUrl}?${params.toString()}`)
           : new HttpParams().set('url', `${apiUrl}`),

@@ -5,6 +5,7 @@ import { InvoicesComponent } from './components/invoices/invoices.component';
 import { ReportsComponent } from './components/reports/reports.component';
 import { LoginComponent } from './components/login/login.component';
 import { authGuard } from './guards/auth.guard';
+import { AuditComponent } from './components/audit/audit.component';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent, canActivate: [authGuard] },
@@ -15,5 +16,6 @@ export const routes: Routes = [
   },
   { path: 'invoices', component: InvoicesComponent, canActivate: [authGuard] },
   { path: 'reports', component: ReportsComponent, canActivate: [authGuard] },
+  { path: 'audit', component: AuditComponent, canActivate: [authGuard] },
   { path: 'login', component: LoginComponent },
 ];

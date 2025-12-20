@@ -12,6 +12,7 @@ const { mkdirp } = require("mkdirp");
 const fs = require("fs");
 const pdf = require("pdf-parse");
 const { v4 } = require("uuid");
+const { handleSpecialRequestHeaders } = require("./proxy-utils");
 
 const app = express();
 app.use(
@@ -141,9 +142,11 @@ app.all("/proxy", async (req, res) => {
   }
 
   // --- Prepare Fetch Options ---
-  const fetchOptions = {
+  let fetchOptions = {
     method: req.method, // Use the incoming request method
-    headers: { ...req.headers }, // Copy incoming request headers
+    headers: {
+      ...req.headers,
+    }, // Copy incoming request headers
     agent: agent, // Use the created proxy agent
     compress: false, // Don't ask target to compress, we'll just pipe the raw response
     redirect: "manual", // Don't follow redirects automatically, let the client handle them
@@ -154,6 +157,10 @@ app.all("/proxy", async (req, res) => {
 
   // Explicitly remove headers that shouldn't be forwarded directly
   delete fetchOptions.headers.host; // node-fetch sets this based on the target URL
+
+  fetchOptions = handleSpecialRequestHeaders(req, fetchOptions);
+  console.log(fetchOptions.headers);
+
   // Remove common hop-by-hop headers (though node-fetch/agents handle some)
   const hopByHopHeaders = [
     "connection",
