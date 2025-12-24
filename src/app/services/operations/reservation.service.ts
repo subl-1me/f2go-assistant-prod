@@ -523,7 +523,7 @@ export class ReservationService {
             return {
               success: false,
               message:
-                'Error trying to get reservation routing. Unexpected string insted object.',
+                'Error trying to get reservation routing. Unexpected string instead object.',
             };
           }
 

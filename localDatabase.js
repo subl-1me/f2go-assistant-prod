@@ -13,10 +13,7 @@ let checkerDb;
 export const initDatabases = async () => {
   console.log("Initializing cache database...");
 
-  // Crear carpeta si no
   const dir = path.dirname(checkerCacheDBPath);
-  console.log(checkerCacheDBPath);
-  console.log(dir);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
@@ -79,9 +76,9 @@ const createRsrvsCheckerTables = async () => {
         CREATE TABLE IF NOT EXISTS cache(
           no INTEGER PRIMARY KEY AUTOINCREMENT,
           reservation TEXT NOT NULL,
+          documents TEXT NOT NULL,
           checkStatus TEXT NOT NULL,
           paymentStatus TEXT NOT NULL,
-          documents TEXT NOT NULL,
           ledgersStatus TEXT NOT NULL,
           activeCoupons TEXT NOT NULL,
           lastCheck DATE NOT NULL,

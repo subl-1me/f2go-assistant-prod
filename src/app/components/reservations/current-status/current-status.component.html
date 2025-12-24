@@ -129,6 +129,16 @@
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
               {{ result.reservation.room }}
+              <span
+                *ngIf="result.routing?.isParent"
+                class="ms-2 bg-amber-600 p-2 text-amber-100 rounded-full"
+                >Maestra</span
+              >
+              <span
+                *ngIf="result.routing?.isRouted"
+                class="ms-2 bg-gray-600 p-2 text-gray-100 rounded-full"
+                >Ruteada</span
+              >
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
               <span
