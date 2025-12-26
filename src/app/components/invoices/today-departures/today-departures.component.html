@@ -1,0 +1,446 @@
+<div class="reservations-table-container">
+  <div
+    class="border border-gray-200 rounded-xl overflow-hidden max-h-130 overflow-y-scroll"
+  >
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th
+            scope="col"
+            class="px-6 py-3 text-left text-xs font-medium text-blue-600 uppercase tracking-wider"
+          >
+            <button
+              class="text-blue-600 hover:text-blue-800 p-1.5 rounded-full hover:bg-blue-100"
+            >
+              <i class="fas fa-check-circle text-lg"></i>
+            </button>
+          </th>
+          <th
+            scope="col"
+            class="px-6 py-3 text-left text-xs font-medium text-blue-600 uppercase tracking-wider"
+          >
+            Reserva
+          </th>
+          <th
+            scope="col"
+            class="px-6 py-3 text-left text-xs font-medium text-blue-600 uppercase tracking-wider"
+          >
+            Huésped
+          </th>
+          <th
+            scope="col"
+            class="px-6 py-3 text-left text-xs font-medium text-blue-600 uppercase tracking-wider"
+          >
+            Habitación
+          </th>
+          <th
+            scope="col"
+            class="px-6 py-3 text-left text-xs font-medium text-blue-600 uppercase tracking-wider"
+          >
+            Datos Facturación
+          </th>
+          <th
+            scope="col"
+            class="px-6 py-3 text-left text-xs font-medium text-blue-600 uppercase tracking-wider"
+          >
+            Folio sugerido
+          </th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200 table-body">
+        @for(data of cache; track $index){
+        <tr class="hover:bg-blue-50 transition-colors">
+          <td class="px-6 py-4 whitespace-nowrap">
+            <button
+              class="text-blue-600 hover:text-blue-800 p-1.5 rounded-full hover:bg-blue-100"
+            >
+              <i class="fa-regular fa-circle"></i>
+            </button>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm font-medium text-blue-600">
+              #{{ data.reservation.id }}
+            </div>
+          </td>
+          <td class="px-6 py-4">
+            <div class="text-sm font-medium text-gray-900">
+              {{ data.reservation.guestName }}
+            </div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <span
+              class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium"
+              >{{ data.reservation.room }}</span
+            >
+          </td>
+          <td class="px-6 py-4">
+            <button
+              class="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center"
+              (click)="openModal(data.reservation.id)"
+            >
+              <i class="fas fa-plus-circle mr-2"></i> Agregar datos fiscales
+            </button>
+            <button
+              class="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center"
+            >
+              <i class="fas fa-robot mr-2"></i> Buscar datos automáticamente
+            </button>
+            <button
+              class="text-amber-600 hover:text-amber-800 text-sm font-medium flex items-center"
+            >
+              <i class="fas fa-circle-check mr-2"></i> Marcar como genérico
+            </button>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <span
+              class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium"
+              >#{{
+                data.reservation.ledgers
+                  ? data.reservation.ledgers[0].ledgerNo
+                  : 1
+              }}</span
+            >
+          </td>
+        </tr>
+
+        <!-- invoice data modal -->
+        <div
+          class="fixed inset-0 bg-gray-600 bg-opacity-75 overflow-y-auto h-full w-full flex items-center justify-center z-50 hidden"
+          id="invoice-input-{{ data.reservation.id }}"
+        >
+          <div class="bg-white rounded-xl shadow-2xl max-w-6xl w-full m-4">
+            <!-- Modal Header -->
+            <div
+              class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gradient-to-r from-blue-50 to-gray-50 rounded-t-xl"
+            >
+              <div class="flex items-center space-x-3">
+                <div class="p-2 bg-blue-100 rounded-lg">
+                  <i class="fas fa-file-invoice text-blue-600"></i>
+                </div>
+                <div>
+                  <h1 class="text-xl font-bold text-gray-800">
+                    Agregar datos para facturación
+                  </h1>
+                  <p class="text-sm text-gray-500 mt-1">
+                    Complete los datos fiscales para generar la factura
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+              <!-- Sección de Búsqueda -->
+              <div
+                class="bg-gradient-to-br from-blue-50 to-white rounded-xl border border-blue-100 shadow-sm"
+              >
+                <div class="p-5">
+                  <div class="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 class="text-lg font-semibold text-gray-800">
+                        Buscar datos de facturación
+                      </h3>
+                      <p class="text-sm text-gray-500 mt-1">
+                        Ingrese el RFC para buscar en el sistema
+                      </p>
+                    </div>
+                    <div class="p-2 bg-blue-100 rounded-lg">
+                      <i class="fas fa-search text-blue-600"></i>
+                    </div>
+                  </div>
+
+                  <div class="space-y-4">
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                      <div class="lg:col-span-5">
+                        <label
+                          for="nombre"
+                          class="block text-sm font-medium text-gray-700 mb-2"
+                        >
+                          <span class="flex items-center">
+                            <i
+                              class="fas fa-user text-gray-400 mr-2 text-sm"
+                            ></i>
+                            Nombre/Razón Social *
+                          </span>
+                        </label>
+                        <input
+                          type="text"
+                          id="nombre"
+                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                          placeholder="Ingrese nombre o razón social"
+                        />
+                      </div>
+
+                      <div class="lg:col-span-5">
+                        <label
+                          for="rfc"
+                          class="block text-sm font-medium text-gray-700 mb-2"
+                        >
+                          <span class="flex items-center">
+                            <i
+                              class="fas fa-id-card text-gray-400 mr-2 text-sm"
+                            ></i>
+                            RFC *
+                          </span>
+                        </label>
+                        <input
+                          type="text"
+                          id="rfc"
+                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                          placeholder="Ingrese RFC (13 caracteres)"
+                          maxlength="13"
+                        />
+                      </div>
+
+                      <div class="lg:col-span-2 flex items-end">
+                        <button
+                          class="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors font-medium flex items-center justify-center space-x-2"
+                        >
+                          <i class="fas fa-search text-sm"></i>
+                          <span>Buscar</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sección de Resultados de Búsqueda -->
+              <div class="space-y-4" *ngIf="searchResults.length > 0">
+                <div
+                  class="bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-200 shadow-sm"
+                >
+                  <div class="p-5">
+                    <div class="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 class="text-lg font-semibold text-gray-800">
+                          Resultados de búsqueda
+                        </h3>
+                        <p class="text-sm text-gray-500 mt-1">
+                          Seleccione uno de los resultados encontrados
+                        </p>
+                      </div>
+                      <span
+                        class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm font-medium"
+                        >2 resultados</span
+                      >
+                    </div>
+
+                    <div class="space-y-3">
+                      <!-- Resultado 1 -->
+                      <div
+                        class="bg-white border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-sm transition-all"
+                      >
+                        <div class="flex items-center justify-between">
+                          <div class="flex-1">
+                            <div class="flex items-center space-x-3 mb-2">
+                              <div>
+                                <h4 class="font-medium text-gray-800">
+                                  Aerolíneas Porreras
+                                </h4>
+                                <div class="flex items-center space-x-4 mt-1">
+                                  <span
+                                    class="text-sm text-gray-600 flex items-center"
+                                  >
+                                    <i
+                                      class="fas fa-id-card text-gray-400 mr-1 text-xs"
+                                    ></i>
+                                    <span class="font-mono">AER23212SD2</span>
+                                  </span>
+                                  <span
+                                    class="text-sm text-gray-600 flex items-center"
+                                  >
+                                    <i
+                                      class="fas fa-map-marker-alt text-gray-400 mr-1 text-xs"
+                                    ></i>
+                                    CP: 23421
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <button
+                            class="px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-colors font-medium text-sm"
+                          >
+                            <i class="fas fa-check mr-2"></i>
+                            Seleccionar
+                          </button>
+                        </div>
+                      </div>
+
+                      <!-- Resultado 2 -->
+                      <div
+                        class="bg-white border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-sm transition-all"
+                      >
+                        <div class="flex items-center justify-between">
+                          <div class="flex-1">
+                            <div class="flex items-center space-x-3 mb-2">
+                              <div>
+                                <h4 class="font-medium text-gray-800">
+                                  Mecánicos ENcara
+                                </h4>
+                                <div class="flex items-center space-x-4 mt-1">
+                                  <span
+                                    class="text-sm text-gray-600 flex items-center"
+                                  >
+                                    <i
+                                      class="fas fa-id-card text-gray-400 mr-1 text-xs"
+                                    ></i>
+                                    <span class="font-mono">MEC2322321S02</span>
+                                  </span>
+                                  <span
+                                    class="text-sm text-gray-600 flex items-center"
+                                  >
+                                    <i
+                                      class="fas fa-map-marker-alt text-gray-400 mr-1 text-xs"
+                                    ></i>
+                                    CP: 32412
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <button
+                            class="px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-colors font-medium text-sm"
+                          >
+                            <i class="fas fa-check mr-2"></i>
+                            Seleccionar
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sección de Datos Adicionales -->
+              <div
+                class="bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-200 shadow-sm"
+                *ngIf="preSelectedInvoiceData"
+              >
+                <div class="p-5">
+                  <div class="flex items-center space-x-3 mb-6">
+                    <div>
+                      <h3 class="text-lg font-semibold text-gray-800">
+                        Información adicional para facturación
+                      </h3>
+                      <p class="text-sm text-gray-500 mt-1">
+                        Complete los datos adicionales requeridos
+                      </p>
+                    </div>
+                  </div>
+
+                  <div class="space-y-5">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                      <div>
+                        <label
+                          for="email"
+                          class="block text-sm font-medium text-gray-700 mb-2"
+                        >
+                          <span class="flex items-center">
+                            <i
+                              class="fas fa-envelope text-gray-400 mr-2 text-sm"
+                            ></i>
+                            Correo Electrónico *
+                          </span>
+                        </label>
+                        <input
+                          type="email"
+                          id="email"
+                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                          placeholder="correo@ejemplo.com"
+                        />
+                      </div>
+
+                      <div>
+                        <label
+                          for="usoCFDI"
+                          class="block text-sm font-medium text-gray-700 mb-2"
+                        >
+                          <span class="flex items-center">
+                            <i
+                              class="fas fa-file-contract text-gray-400 mr-2 text-sm"
+                            ></i>
+                            Uso CFDI *
+                          </span>
+                        </label>
+                        <select
+                          id="usoCFDI"
+                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white appearance-none"
+                        >
+                          <option value="">Seleccione una opción</option>
+                          <option value="G03">G03 - Gastos en general</option>
+                          <option value="S01">
+                            S01 - Sin Efectos Fiscales
+                          </option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label
+                        for="notas"
+                        class="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        <span class="flex items-center">
+                          <i
+                            class="fas fa-sticky-note text-gray-400 mr-2 text-sm"
+                          ></i>
+                          Notas Adicionales
+                        </span>
+                      </label>
+                      <textarea
+                        id="notas"
+                        rows="3"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        placeholder="Observaciones adicionales para la factura..."
+                      ></textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div
+              class="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3 bg-gradient-to-r from-gray-50 to-blue-50 rounded-b-xl"
+            >
+              <button
+                class="px-5 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors font-medium flex items-center"
+                (click)="clodeModal(data.reservation.id)"
+              >
+                <i class="fas fa-times mr-2"></i>
+                Cerrar
+              </button>
+              <button
+                class="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-black rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all font-medium flex items-center shadow-sm"
+                (click)="saveFiscalDataSelection()"
+              >
+                <i class="fas fa-save mr-2"></i>
+                Guardar Datos
+              </button>
+            </div>
+          </div>
+        </div>
+        }
+      </tbody>
+    </table>
+  </div>
+  <div
+    class="mt-4 flex items-center justify-between border-t border-gray-200 pt-4"
+  >
+    <div class="text-sm text-gray-500">
+      Mostrando
+      <span class="font-medium">{{ cache.length }}</span> reservaciones
+    </div>
+    <div class="flex space-x-2">
+      <button
+        type="button"
+        class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+      >
+        Facturar seleccionados (0)
+        <i class="fas fa-chevron-right mr-1"></i>
+      </button>
+    </div>
+  </div>
+</div>
