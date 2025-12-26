@@ -5,7 +5,6 @@ import { CheckerComponent } from './checker/checker.component';
 import { RoutingsComponent } from './routings/routings.component';
 import { AutoAssignRoomsComponent } from './auto-assign-rooms/auto-assign-rooms.component';
 import { ReservationService } from '../../services/operations/reservation.service';
-import { resolve } from 'path';
 
 @Component({
   selector: 'app-reservations',

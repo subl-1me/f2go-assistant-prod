@@ -1,6 +1,7 @@
 import { DatePipe, NgIf } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import StandardCheckResult from '../../../models/StandardCheckResult';
+import { LocalDatabaseService } from '../../../services/local-database.service';
 import {
   BONVOY_CERTIFICATE,
   COUPON,
@@ -36,7 +37,7 @@ export class CurrentStatusComponent implements OnInit {
     PRE_PAID: PAYMENT_STATUS_PREPAID,
   };
 
-  constructor() {}
+  constructor(private localDBService: LocalDatabaseService) {}
 
   async ngOnInit(): Promise<void> {
     await this.loadCache();
@@ -63,21 +64,8 @@ export class CurrentStatusComponent implements OnInit {
   }
 
   private async loadCache(): Promise<void> {
-    const data = await window.electron.ipcRenderer.invoke('read');
-    this.lastCheckerResults = data.map((result: any) => {
-      return {
-        reservation: JSON.parse(result.reservation),
-        documents: JSON.parse(result.documents),
-        paymentStatus: result.paymentStatus,
-        checkStatus: result.checkStatus,
-        lastCheck: result.lastCheck,
-        checkAgainAt: result.checkAgainAt,
-        prePaidMethod: JSON.parse(result.prePaidMethod),
-        activeCoupons: JSON.parse(result.activeCoupons),
-        ledgersStatus: JSON.parse(result.ledgersStatus),
-        routing: JSON.parse(result.routing),
-      } as StandardCheckResult;
-    });
+    this.lastCheckerResults = await this.localDBService.loadCache();
+    console.log(this.lastCheckerResults);
   }
 
   public async refreshReservationsCache(): Promise<void> {

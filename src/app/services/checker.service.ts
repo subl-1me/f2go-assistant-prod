@@ -1,7 +1,5 @@
 import { Injectable } from '@angular/core';
 import Reservation from '../models/Reservation';
-import { LedgerService } from './operations/ledger.service';
-import { PrepaidService } from './operations/prepaid.service';
 import {
   ACCESS,
   CHECKER_STATUS_CHECKED,
@@ -19,18 +17,20 @@ import {
   PAYMENT_STATUS_ROUTED,
   PAYMENT_STATUS_TODAY_PAID,
 } from '../const';
-import { ReservationService } from './operations/reservation.service';
 import StandardCheckResult from '../models/StandardCheckResult';
 import { FrontService } from './front-service';
 import AttachedDocuments from '../models/AttachedDocuments';
-import { DocumentAnalyzerService } from './document-analyzer.service';
 import { downloaderQueue } from '../utils/queues';
-import { LocalDatabaseService } from './local-database.service';
 import { lastValueFrom } from 'rxjs';
-import CouponDataExtraction from '../shared/coupon-extractions';
-import Comparation from '../models/Comparation';
-import { Route } from '@angular/router';
 import Routing from '../models/Routing';
+
+// services
+import { LocalDatabaseService } from './local-database.service';
+import { DocumentAnalyzerService } from './document-analyzer.service';
+import { ReservationService } from './operations/reservation.service';
+import { LedgerService } from './operations/ledger.service';
+import { PrepaidService } from './operations/prepaid.service';
+import Ledger from '../models/Ledger';
 
 @Injectable({
   providedIn: 'root',
@@ -41,31 +41,158 @@ export class CheckerService {
     private prePaidService: PrepaidService,
     private reservationService: ReservationService,
     private frontService: FrontService,
-    private documentAnalyzerService: DocumentAnalyzerService
+    private documentAnalyzerService: DocumentAnalyzerService,
+    private localDBService: LocalDatabaseService
   ) {}
 
   public async performChecker(reservations: Reservation[]): Promise<any> {
-    // create DB to save local cache
+    // check if is already on cache to start a faster checking
+    const cache = await this.localDBService.loadCache();
+    const cachedReservations = reservations.filter((reservation) =>
+      cache.some((data) => data.reservation.id === reservation.id)
+    );
 
-    // first load reservation ledgers, documents, VCC, notes, rates & helpful stuff
+    const notCachedReservations = reservations.filter(
+      (reservation) =>
+        !cache.some((data) => data.reservation.id === reservation.id)
+    );
 
-    const loadReservationDataPromises = reservations.map((reservation) => {
-      return this.collectReservationData(reservation);
+    // check not cached reservations
+    const getNotCachedResults = async () => {
+      const loadReservationDataPromises = notCachedReservations.map(
+        (reservation) => {
+          return this.collectReservationData(reservation);
+        }
+      );
+      const loadedReservations = await Promise.all(loadReservationDataPromises);
+      const collectedData = loadedReservations.map(
+        (data: any, index: number) => {
+          return { reservation: reservations[index], data };
+        }
+      );
+      const checkPromises = collectedData.map((data: any) => {
+        return this.startStandardCheck(data.reservation, data.data);
+      });
+      const checkResults = await Promise.all(checkPromises);
+      return checkResults;
+    };
+
+    // check cached reservations
+    const getCachedResults = async () => {
+      const fastCheckResultsPromises = cachedReservations.map((reservation) => {
+        const loadedCache =
+          cache.find((data) => data.reservation.id === reservation.id) || null;
+        return this.startCachedCheck(reservation, loadedCache);
+      });
+
+      const fastCheckResults = await Promise.all(fastCheckResultsPromises);
+      return fastCheckResults;
+    };
+
+    const notCachedResults = await getNotCachedResults();
+    const cachedResults = await getCachedResults();
+
+    return { newData: notCachedResults, updated: cachedResults };
+  }
+
+  private async startCachedCheck(
+    reservation: Reservation,
+    cache: StandardCheckResult | null
+  ): Promise<any> {
+    if (!cache) {
+      return {
+        errors: ['Cache not found. Please, verify.'],
+      };
+    }
+    let cachedCheckResult = {
+      reservation: reservation,
+      updates: {},
+    };
+
+    let updates: any = {};
+    const documents = await this.reservationService.getAttachedDocuments(
+      reservation.id
+    );
+
+    if (documents.length > cache.documents.length) {
+      // download new documents & update them
+      const newDocuments = documents.slice(
+        cache.documents.length,
+        documents.length
+      );
+      const { successfulDownloads, errorDownloads } =
+        await this.downloadAttachedDocuments(newDocuments);
+
+      if (successfulDownloads.length > 0) {
+        const classifiedDocuments = await this.classifyDocuments(
+          successfulDownloads
+        );
+
+        const { unsupported, coupons } = classifiedDocuments;
+
+        if (coupons.length > 0) {
+          // read & extract coupons data
+          const detailedCoupons = coupons.map((coupon: any) => {
+            const extraction = this.documentAnalyzerService.extract(
+              coupon.provider,
+              coupon.text
+            );
+            return {
+              ...coupon,
+              extraction,
+            };
+          });
+
+          // compare coupon data to reservation data
+          const comparations = detailedCoupons.map((coupon: any) => {
+            const comparation = this.documentAnalyzerService.compare(
+              reservation,
+              coupon.extraction
+            );
+            return {
+              ...coupon,
+              comparation,
+            };
+          });
+
+          updates.newCoupons = [
+            ...comparations.map((couponData: any, index: number) => {
+              return {
+                sourceReservation: reservation.id,
+                error: couponData.error,
+                extraction: couponData.extraction,
+                comparation: couponData.comparation,
+                provider: couponData.provider,
+                type: couponData.type,
+                priority: coupons[index].provider === ACCESS ? 1 : 2,
+              };
+            }),
+          ];
+        }
+      }
+
+      updates.documents = documents;
+    }
+
+    // get ledgers to search for new charges or payments
+    const ledgers = await this.getReservationLedgersAndTransactions(
+      reservation
+    );
+    const updatedLedgers = ledgers.filter((ledger) => {
+      const hasUpdates = ledger.transactions.find((trans) => {
+        const dateTimestamp = (trans.date as Date).getTime() | 0;
+        if (dateTimestamp > cache.lastCheck.getTime()) {
+          return trans;
+        }
+
+        return null;
+      });
+      return hasUpdates ? ledger : null;
     });
 
-    const loadedReservations = await Promise.all(loadReservationDataPromises);
-
-    const collectedData = loadedReservations.map((data: any, index: number) => {
-      return { reservation: reservations[index], data };
-    });
-
-    const checkPromises = collectedData.map((data: any) => {
-      return this.startStandardCheck(data.reservation, data.data);
-    });
-
-    const checkResults = await Promise.all(checkPromises);
-
-    return { status: 200, message: 'OK', checkResults };
+    updates.ledgers = [...updatedLedgers];
+    cachedCheckResult.updates = updates;
+    return cachedCheckResult;
   }
 
   private async startStandardCheck(
@@ -133,6 +260,8 @@ export class CheckerService {
           }
         );
       }
+
+      checkResult.documents = documents;
     }
 
     // check ledgers
@@ -209,12 +338,10 @@ export class CheckerService {
     if (routings.length > 0) {
       const routing = routings[0];
       checkResult.routing = routing;
-      checkResult.paymentStatus = routing.isParent
-        ? PAYMENT_STATUS_MASTER
-        : PAYMENT_STATUS_ROUTED;
       if (routing.isParent) {
         const routingCheck = await this.checkRouting(routing);
         if (checkResult.routing) {
+          checkResult.paymentStatus = PAYMENT_STATUS_FULLY_PAID;
           checkResult.routing.check = {
             diff: routingCheck.diff,
             totalPaid: routingCheck.totalPaid,
@@ -286,7 +413,9 @@ export class CheckerService {
     return { unsupported, coupons };
   }
 
-  private async collectReservationData(reservation: Reservation): Promise<any> {
+  private async getReservationLedgersAndTransactions(
+    reservation: Reservation
+  ): Promise<Ledger[]> {
     // load reservation ledgers
     const ledgers = await this.ledgerService.getReservationledger(
       reservation.id
@@ -302,6 +431,15 @@ export class CheckerService {
     ledgers.forEach((ledger, index) => {
       ledger.transactions = transactions[index];
     });
+
+    return ledgers;
+  }
+
+  private async collectReservationData(reservation: Reservation): Promise<any> {
+    // load reservation ledgers & transactions
+    const ledgers = await this.getReservationLedgersAndTransactions(
+      reservation
+    );
 
     // search for pre-paid method
     const prePaidMethod = await this.prePaidService.getPrePaidMethod(

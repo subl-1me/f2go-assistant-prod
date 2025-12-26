@@ -1,18 +1,12 @@
 import { Component } from '@angular/core';
 import { CommonModule, NgIf } from '@angular/common';
 import Reservation from '../../../models/Reservation';
-import { FrontService } from '../../../services/front-service';
-import { environment } from '../../../../environment';
-import {
-  PAYLOAD_STATUS_CHIN,
-  PAYLOAD_STATUS_NOSHOW,
-  PAYLOAD_STATUS_CHOUT,
-} from '../../../const';
 import { FormsModule } from '@angular/forms';
 import { CheckerService } from '../../../services/checker.service';
 import { BackgroundProcessServiceService } from '../../../services/background-process-service.service';
 import { ReservationService } from '../../../services/operations/reservation.service';
 import StandardCheckResult from '../../../models/StandardCheckResult';
+import { LocalDatabaseService } from '../../../services/local-database.service';
 
 @Component({
   selector: 'app-checker',
@@ -35,7 +29,8 @@ export class CheckerComponent {
   constructor(
     private checkerService: CheckerService,
     private backgroundProcessService: BackgroundProcessServiceService,
-    private reservationService: ReservationService
+    private reservationService: ReservationService,
+    private localDBService: LocalDatabaseService
   ) {
     this.inHouseReservations = [];
     this.selectedReservations = [];
@@ -50,20 +45,7 @@ export class CheckerComponent {
   }
 
   private async loadCache(): Promise<void> {
-    const data = await window.electron.ipcRenderer.invoke('read');
-    this.lastCheckerResults = data.map((result: any) => {
-      return {
-        reservation: JSON.parse(result.reservation),
-        documents: JSON.parse(result.documents),
-        paymentStatus: result.paymentStatus,
-        checkStatus: result.checkStatus,
-        lastCheck: result.lastCheck,
-        checkAgainAt: result.checkAgainAt,
-        prePaidMethod: JSON.parse(result.prePaidMethod),
-        activeCoupons: JSON.parse(result.activeCoupons),
-        ledgersStatus: JSON.parse(result.ledgersStatus),
-      } as StandardCheckResult;
-    });
+    this.lastCheckerResults = await this.localDBService.loadCache();
   }
 
   async getInHouseReservations() {
@@ -89,14 +71,20 @@ export class CheckerComponent {
       this.selectedReservations
     );
 
-    // save results to db
-    const saveToDBPromises = checkerResponse.checkResults.map(
-      async (result: any) => {
-        return await window.electron.ipcRenderer.invoke('write', result);
-      }
-    );
+    const { updated, newData } = checkerResponse;
+    // save new results to db
+    const saveToDBPromises = newData.map(async (data: any) => {
+      return await window.electron.ipcRenderer.invoke('write', data);
+    });
 
     await Promise.all(saveToDBPromises);
+
+    // const updateOnDBPromises = updated.map(async (data: any) => {
+    //   return await window.electron.ipcRenderer.invoke('updateItem', data);
+    // });
+
+    // await Promise.all(updateOnDBPromises);
+
     this.isChecking = false;
   }
 

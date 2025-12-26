@@ -5,6 +5,7 @@ const {
   write,
   read,
   removeReservationsCache,
+  updateItem,
 } = require("./localDatabase");
 const { ipcMain } = require("electron");
 
@@ -46,6 +47,15 @@ ipcMain.handle("init-db", async () => {
 ipcMain.handle("write", async (event, data) => {
   try {
     return await write(data);
+  } catch (err) {
+    console.log(err);
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle("updateIten", async (event, data) => {
+  try {
+    return await updateItem(data.reservation, data.updates);
   } catch (err) {
     console.log(err);
     return { success: false, error: err.message };

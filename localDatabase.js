@@ -69,6 +69,45 @@ export const read = async () => {
   });
 };
 
+export const updateItem = async (reservationId, data) => {
+  return new Promise(async (resolve, reject) => {
+    const cacheRaw = await read();
+    const cache = cacheRaw.map((result) => {
+      return {
+        reservation: JSON.parse(result.reservation),
+        documents: JSON.parse(result.documents),
+        paymentStatus: result.paymentStatus,
+        checkStatus: result.checkStatus,
+        lastCheck: result.lastCheck,
+        checkAgainAt: result.checkAgainAt,
+        prePaidMethod: JSON.parse(result.prePaidMethod),
+        activeCoupons: JSON.parse(result.activeCoupons),
+        ledgersStatus: JSON.parse(result.ledgersStatus),
+        routing: JSON.parse(result.routing),
+      };
+    });
+
+    const target = cache.find((item) => item.reservation.id === reservationId);
+    if (!target) {
+      resolve({ success: false, message: "Reservation target not found." });
+    }
+
+    const fields = Object.keys(data)
+      .map((key) => `${key} = ?`)
+      .join(", ");
+    const values = Object.values(data);
+
+    checkerDb.run(
+      `UPDATE cache SET ${fields} WHERE id = ?`,
+      [...values, reservationId],
+      function (err) {
+        if (err) reject(err);
+        resolve(null);
+      }
+    );
+  });
+};
+
 const createRsrvsCheckerTables = async () => {
   return new Promise((resolve, reject) => {
     checkerDb.run(
