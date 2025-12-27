@@ -19,15 +19,9 @@ export class InvoicesComponent implements OnInit {
     this.isCurrentCardCollapsed = false;
   }
 
-  ngOnInit(): void {
-    this.getCache();
-  }
+  ngOnInit(): void {}
 
   public toggleCurrentCardCollapse(): void {
     this.isCurrentCardCollapsed = !this.isCurrentCardCollapsed;
-  }
-
-  private async getCache(): Promise<void> {
-    this.cache = await this.localDBService.loadCache();
   }
 }
