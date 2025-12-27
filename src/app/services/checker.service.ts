@@ -338,18 +338,21 @@ export class CheckerService {
     if (routings.length > 0) {
       const routing = routings[0];
       checkResult.routing = routing;
-      if (routing.isParent) {
-        const routingCheck = await this.checkRouting(routing);
-        if (checkResult.routing) {
-          checkResult.paymentStatus = PAYMENT_STATUS_FULLY_PAID;
-          checkResult.routing.check = {
-            diff: routingCheck.diff,
-            totalPaid: routingCheck.totalPaid,
-            totalToPay: routingCheck.totalToPay,
-            success: routingCheck.success,
-            message: routingCheck.message ? routingCheck.message : '',
-          };
-        }
+      const routingCheck = await this.checkRouting(routing);
+      // only check if is parent
+      if (routingCheck.valid && checkResult.routing && routing.isParent) {
+        checkResult.paymentStatus = PAYMENT_STATUS_FULLY_PAID;
+        checkResult.routing.check = {
+          diff: routingCheck.diff,
+          totalPaid: routingCheck.totalPaymentsSum,
+          totalToPay: routingCheck.totalToPay,
+          success: routingCheck.valid,
+          errors: routingCheck.errors,
+        };
+      }
+
+      if (routing.isRouted) {
+        checkResult.paymentStatus = PAYMENT_STATUS_FULLY_PAID;
       }
       checkResult.checkAgainAt = reservation.dateOut;
     }
@@ -463,6 +466,14 @@ export class CheckerService {
   }
 
   private async checkRouting(routing: Routing): Promise<any> {
+    let routingCheckResult: any = {
+      totalToPay: 0,
+      totalPaymentsSum: 0,
+      valid: false,
+      diff: 0,
+      errors: [],
+    };
+
     const reservations = await this.reservationService.getInHouseReservations();
     const master = reservations.find(
       (reservation) => reservation.id === routing.parentId
@@ -472,11 +483,13 @@ export class CheckerService {
     );
 
     if (!master) {
-      return { success: false, error: 'Master reservation not found.' };
+      routingCheckResult.errors.push('Master reservation not found.');
+      return routingCheckResult;
     }
 
     if (!childs || childs.length === 0) {
-      return { success: false, error: 'Routing has no child reservations.' };
+      routingCheckResult.errors.push('Routing child reservations not found.');
+      return routingCheckResult;
     }
 
     // get total payment in master reservation
@@ -488,7 +501,8 @@ export class CheckerService {
       (ledger) => ledger.ledgerNo === routing.parentLedgerTarget
     );
     if (!targetLedger) {
-      return { success: false, error: 'Routing target ledger not found.' };
+      routingCheckResult.errors.push('Routing target ledger not found.');
+      return routingCheckResult;
     }
 
     const targetLedgerTransactions =
@@ -503,6 +517,7 @@ export class CheckerService {
 
     // get total from each reservation
     let totalToPay = 0;
+    let childsTotalSum = 0;
 
     const masterRates = await this.reservationService.getReservationRates(
       master.id
@@ -514,18 +529,37 @@ export class CheckerService {
 
     for (const child of routing.childs || []) {
       const rates = await this.reservationService.getReservationRates(child);
-      totalToPay += rates.reduce((accum, current) => {
+      childsTotalSum += rates.reduce((accum, current) => {
         return (accum += Math.abs(current.amount));
       }, 0);
-
-      return {
-        success: true,
-        totalToPay,
-        totalPaid: paymentSum,
-        diff: Number(
-          parseFloat((paymentSum - totalToPay).toString()).toFixed(2)
-        ),
-      };
     }
+
+    totalToPay += childsTotalSum;
+
+    routingCheckResult.totalToPay = totalToPay;
+    routingCheckResult.totalPaymentsSum = paymentSum;
+    let diff = Number(
+      parseFloat((paymentSum - totalToPay).toString()).toFixed(2)
+    );
+    if (diff === 0) {
+      routingCheckResult.valid = true;
+    }
+
+    if (diff > 0) {
+      routingCheckResult.valid = true;
+      routingCheckResult.errors.push(
+        `Routing payment exceed total to pay by: $${diff}`
+      );
+    }
+
+    if (diff < 0) {
+      routingCheckResult.valid = false;
+      routingCheckResult.errors.push(
+        `Routing payment is not completed. Pending amount: $${diff}`
+      );
+    }
+
+    routingCheckResult.diff = diff;
+    return routingCheckResult;
   }
 }

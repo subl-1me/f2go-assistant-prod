@@ -9,7 +9,7 @@ export default interface Routing {
 
 interface Check {
   success: boolean;
-  message: string;
+  errors: string[];
   diff: number | Number;
   totalPaid: number | Number;
   totalToPay: number | Number;
