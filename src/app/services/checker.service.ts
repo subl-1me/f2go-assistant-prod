@@ -357,6 +357,12 @@ export class CheckerService {
       checkResult.checkAgainAt = reservation.dateOut;
     }
 
+    // get rates
+    const rates = await this.reservationService.getReservationRates(
+      reservation.id
+    );
+    reservation.rates = rates;
+
     checkResult.checkStatus = CHECKER_STATUS_CHECKED;
     return checkResult;
   }

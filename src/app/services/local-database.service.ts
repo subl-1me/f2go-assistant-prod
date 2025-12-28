@@ -20,6 +20,7 @@ export class LocalDatabaseService {
         prePaidMethod: JSON.parse(result.prePaidMethod),
         activeCoupons: JSON.parse(result.activeCoupons),
         ledgersStatus: JSON.parse(result.ledgersStatus),
+        routing: JSON.parse(result.routing || {}),
       } as StandardCheckResult;
     });
 

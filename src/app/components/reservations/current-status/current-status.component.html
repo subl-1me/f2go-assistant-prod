@@ -1,21 +1,6 @@
 <div class="reservations-table-container">
   <div class="mb-6 bg-gray-50 p-4 rounded-lg">
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <!-- button actions -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1"
-          >Operaciones</label
-        >
-        <i
-          (click)="refreshReservationsCache()"
-          class="p-2 bg-blue-600/20 rounded-full text-blue-600 fas fa-refresh me-3 transform transition-all hover:scale-110"
-        ></i>
-        <i
-          (click)="removeCurrentCache()"
-          class="fas fa-trash-can p-2 bg-blue-600/20 rounded-full text-blue-600 fas fa-refresh me-3 transform transition-all hover:scale-110"
-        ></i>
-      </div>
-
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <!-- Filter by status -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1"
@@ -27,11 +12,7 @@
           <option>Todas</option>
           <option>Pagado</option>
           <option>Pendiente</option>
-          <option>Revisión</option>
-          <option>Maestra</option>
           <option>Prepagada</option>
-          <option>No aplica</option>
-          <option>Amparada</option>
         </select>
       </div>
 
@@ -130,12 +111,12 @@
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
               {{ result.reservation.room }}
               <span
-                *ngIf="result.routing?.isParent"
+                *ngIf="result.routing && result.routing.isParent"
                 class="ms-2 bg-amber-600 p-2 text-amber-100 rounded-full"
                 >Maestra</span
               >
               <span
-                *ngIf="result.routing?.isRouted"
+                *ngIf="result.routing && result.routing.isRouted"
                 class="ms-2 bg-gray-600 p-2 text-gray-100 rounded-full"
                 >Ruteada</span
               >
@@ -216,18 +197,20 @@
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
               {{ result.lastCheck | date : "short" }}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+            <td
+              class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900"
+            >
               <span (click)="openCheckResultModal(result.reservation.id)">
-                <i class="fas fa-eye me-1"></i>
-                Ver detalles
+                Mostrar detalles
                 <i
-                  class="fas fa-triangle-exclamation ms-1 text-red"
+                  class="fas fa-triangle-exclamation ms-1 text-red-300"
                   *ngIf="result.ledgersStatus.errors.length > 0"
                 ></i>
               </span>
             </td>
           </tr>
 
+          <!-- Details Modal -->
           <div
             class="fixed inset-0 bg-gray-600 bg-opacity-75 overflow-y-auto h-full w-full flex items-center justify-center z-50 hidden"
             id="check-details-{{ result.reservation.id }}"
@@ -237,10 +220,7 @@
                 class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50 rounded-t-xl"
               >
                 <h3 class="text-lg font-semibold text-gray-900">
-                  Detalles de revisión de reserva #<span class="text-blue-700"
-                    >{{ result.reservation.id }} ~
-                    {{ result.reservation.marriotId }}</span
-                  >
+                  Detalles de revisión de reserva
                 </h3>
                 <button
                   (click)="closeCheckResultModal(result.reservation.id)"
@@ -255,8 +235,7 @@
                   <h4
                     class="text-md font-bold text-gray-700 mb-3 flex items-center"
                   >
-                    <i class="fas fa-calendar-check me-2 text-emerald-600"></i>
-                    Información General
+                    Información General de la Reservación
                   </h4>
                   <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                     <div class="col-span-2 sm:col-span-1">
@@ -284,9 +263,11 @@
                       </dd>
                     </div>
                     <div class="col-span-2">
-                      <dt class="font-medium text-gray-500">Monto Total:</dt>
+                      <dt class="font-medium text-gray-500">
+                        Monto Total a Pagar:
+                      </dt>
                       <dd class="text-gray-900 font-semibold">
-                        $12,500.00 MXN
+                        {{ calculateTotal(result.reservation.rates || []) }} MXN
                       </dd>
                     </div>
                   </dl>
@@ -296,7 +277,6 @@
                   <h4
                     class="text-md font-bold text-gray-700 mb-3 flex items-center"
                   >
-                    <i class="fas fa-credit-card me-2 text-emerald-600"></i>
                     Estado del Pago
                   </h4>
                   <div
@@ -306,7 +286,7 @@
                     "
                   >
                     <span class="font-semibold text-green-800"
-                      >Pagado completamente
+                      >Reserva Pagada Completamente.
                     </span>
                     <i class="fas fa-check-circle text-green-600 text-xl"></i>
                   </div>
@@ -315,7 +295,7 @@
                     *ngIf="result.paymentStatus === PAYMENT_STATUS_DICT.PARTIAL"
                   >
                     <span class="font-semibold text-green-800"
-                      >Pagado parcialmente (1/5)
+                      >Reserva pagada parcialmente (1/2)
                     </span>
                     <i class="fas fa-check-circle text-green-600 text-xl"></i>
                   </div>
@@ -334,7 +314,9 @@
                     class="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center justify-between"
                     *ngIf="result.paymentStatus === PAYMENT_STATUS_DICT.PENDING"
                   >
-                    <span class="font-semibold text-green-800">Pendiente </span>
+                    <span class="font-semibold text-green-800"
+                      >Pago de Reservación Pendiente</span
+                    >
                     <i class="fas fa-check-circle text-red-600 text-xl"></i>
                   </div>
                   <div
@@ -343,7 +325,9 @@
                       result.paymentStatus === PAYMENT_STATUS_DICT.PRE_PAID
                     "
                   >
-                    <span class="font-semibold text-blue-800">Prepagado</span>
+                    <span class="font-semibold text-blue-800"
+                      >Reservación Prepagada</span
+                    >
                     <i class="fas fa-check-circle text-blue-600 text-xl"></i>
                   </div>
                 </div>
@@ -351,10 +335,27 @@
                 <div>
                   <h4
                     class="text-md font-bold text-gray-700 mb-3 flex items-center"
+                    *ngIf="result.routing && result.routing.isParent"
                   >
-                    <i
-                      class="fas fa-triangle-exclamation me-2 text-emerald-600"
-                    ></i>
+                    Pagos a otras reservaciones
+                  </h4>
+                  <div
+                    class="p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between"
+                  >
+                    <span class="font-semibold text-amber-800"
+                      >Esta reserva paga las siguientes reservaciones:
+                      {{
+                        composeChildReservations(result.routing?.childs || [])
+                      }}
+                    </span>
+                    <i class="fas fa-users text-amber-600 text-xl"></i>
+                  </div>
+                </div>
+
+                <div>
+                  <h4
+                    class="text-md font-bold text-gray-700 mb-3 flex items-center"
+                  >
                     Indicadores y Errores
                   </h4>
 
@@ -370,44 +371,18 @@
                     class="p-4 bg-white border border-gray-200 rounded-lg text-center"
                     *ngIf="result.ledgersStatus.errors.length > 0"
                   >
-                    <ul class="max-w-lg space-y-1 text-gray-600 list-inside">
+                    <ul
+                      class="max-w-lg space-y-1 text-gray-500 font-semibold list-inside"
+                    >
                       @for(error of result.ledgersStatus.errors; track $index){
                       <li>
-                        <i class="fas fa-triangle-exclamation me-2"></i>
+                        <i
+                          class="fas fa-triangle-exclamation me-2 text-red-500"
+                        ></i>
                         {{ error.message }}
                       </li>
                       }
                     </ul>
-                  </div>
-                </div>
-
-                <div>
-                  <h4
-                    class="text-md font-bold text-gray-700 mb-3 flex items-center"
-                  >
-                    <i class="fas fa-wallet me-2 text-emerald-600"></i> Métodos
-                    de Prepago
-                  </h4>
-
-                  <div class="flex flex-wrap gap-3">
-                    <span
-                      class="p-2 text-white bg-green-600 rounded-lg text-sm font-medium"
-                    >
-                      <i class="fas fa-credit-card me-1"></i>
-                      Tarjeta Virtual
-                    </span>
-                    <span
-                      class="p-2 text-white bg-blue-600 rounded-lg text-sm font-medium"
-                    >
-                      <i class="fas fa-receipt me-1"></i>
-                      Cupón (Desc. 10%)
-                    </span>
-                    <span
-                      class="p-2 text-white bg-purple-600 rounded-lg text-sm font-medium"
-                    >
-                      <i class="fas fa-certificate me-1"></i>
-                      Puntos (500 pts)
-                    </span>
                   </div>
                 </div>
               </div>
@@ -433,36 +408,24 @@
     class="mt-4 flex items-center justify-between border-t border-gray-200 pt-4"
   >
     <div class="text-sm text-gray-500">
-      Mostrando <span class="font-medium">1</span> a
-      <span class="font-medium">3</span> de
-      <span class="font-medium">8</span> reservaciones
+      Mostrando {{ lastCheckerResults.length }} resultados
     </div>
     <div class="flex space-x-2">
       <button
-        class="px-3 py-1 rounded-lg border border-gray-200 text-sm bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-        disabled
+        type="button"
+        class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+        (click)="refreshReservationsCache()"
       >
-        <i class="fas fa-chevron-left"></i>
+        Actualizar
+        <i class="fas fa-refresh mr-1"></i>
       </button>
       <button
-        class="px-3 py-1 rounded-lg border border-emerald-500 text-sm bg-blue-500 text-white hover:bg-blue-600"
+        type="button"
+        class="text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
+        (click)="removeCurrentCache()"
       >
-        1
-      </button>
-      <button
-        class="px-3 py-1 rounded-lg border border-gray-200 text-sm bg-white text-gray-700 hover:bg-gray-50"
-      >
-        2
-      </button>
-      <button
-        class="px-3 py-1 rounded-lg border border-gray-200 text-sm bg-white text-gray-700 hover:bg-gray-50"
-      >
-        3
-      </button>
-      <button
-        class="px-3 py-1 rounded-lg border border-gray-200 text-sm bg-white text-gray-700 hover:bg-gray-50"
-      >
-        <i class="fas fa-chevron-right"></i>
+        Eliminar Datos
+        <i class="fas fa-trash mr-1"></i>
       </button>
     </div>
   </div>

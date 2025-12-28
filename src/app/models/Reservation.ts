@@ -1,5 +1,6 @@
 import AttachedDocuments from './AttachedDocuments';
 import Ledger from './Ledger';
+import Rate from './Rate';
 import PrePaidMethod from './PrePaidMethod';
 
 export default interface Reservation {
@@ -13,6 +14,7 @@ export default interface Reservation {
   reservationStatus: string;
   prepaidMethod?: PrePaidMethod;
   ledgers?: Ledger[];
+  rates?: Rate[];
   attachedDocuments?: AttachedDocuments[];
   numberOfGuests: number;
   company: string;

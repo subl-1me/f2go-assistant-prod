@@ -13,6 +13,7 @@ import {
   PAYMENT_STATUS_ERROR,
   PAYMENT_STATUS_PREPAID,
 } from '../../../const';
+import Rate from '../../../models/Rate';
 
 @Component({
   selector: 'app-current-status',
@@ -63,6 +64,12 @@ export class CurrentStatusComponent implements OnInit {
     modal.classList.add('hidden');
   }
 
+  public calculateTotal(rates: Rate[]): number {
+    return rates.reduce((current, rate) => {
+      return (current += rate.amount);
+    }, 0);
+  }
+
   private async loadCache(): Promise<void> {
     this.lastCheckerResults = await this.localDBService.loadCache();
     console.log(this.lastCheckerResults);
@@ -75,5 +82,11 @@ export class CurrentStatusComponent implements OnInit {
   public async removeCurrentCache(): Promise<void> {
     await window.electron.ipcRenderer.invoke('removeReservationsCache');
     this.lastCheckerResults = [];
+  }
+
+  public composeChildReservations(childs: string[]): string {
+    return childs.reduce((accum, current) => {
+      return accum.concat(`, ${current}`);
+    }, '');
   }
 }
