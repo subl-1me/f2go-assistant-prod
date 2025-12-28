@@ -89,4 +89,15 @@ export class CurrentStatusComponent implements OnInit {
       return accum.concat(`, ${current}`);
     }, '');
   }
+
+  public trackOnCache(reservationId: string): StandardCheckResult | null {
+    const target = this.lastCheckerResults.find(
+      (data) => data.reservation.id === reservationId
+    );
+    if (!target) {
+      return null;
+    }
+
+    return target;
+  }
 }
