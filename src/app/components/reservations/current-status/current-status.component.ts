@@ -44,7 +44,20 @@ export class CurrentStatusComponent implements OnInit {
     await this.loadCache();
   }
 
+  private resetModals(): void {
+    this.lastCheckerResults.forEach((result) => {
+      const modal = document.getElementById(
+        `check-details-${result.reservation.id}`
+      );
+      if (modal) {
+        modal.classList.add('hidden');
+      }
+    });
+  }
+
   public openCheckResultModal(modalId: string): void {
+    this.resetModals();
+
     const modal = document.getElementById(`check-details-${modalId}`);
     if (!modal) {
       alert(`Error trying to open reservation's modal details.`);

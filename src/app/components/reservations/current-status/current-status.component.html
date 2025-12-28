@@ -212,7 +212,7 @@
 
           <!-- Details Modal -->
           <div
-            class="fixed inset-0 bg-gray-600 bg-opacity-75 overflow-y-auto h-full w-full flex items-center justify-center z-50 hidden"
+            class="fixed inset-0 bg-gray-600 bg-opacity-75 overflow-y-auto h-full w-full flex items-center justify-center z-50 hidden details-modal-content"
             id="check-details-{{ result.reservation.id }}"
           >
             <div class="bg-white rounded-xl shadow-2xl max-w-6xl w-full m-4">
@@ -296,13 +296,33 @@
                   <div
                     class="p-4 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between"
                     *ngIf="
-                      result.paymentStatus === PAYMENT_STATUS_DICT.FULLY_PAID
+                      result.paymentStatus === PAYMENT_STATUS_DICT.FULLY_PAID &&
+                      !result.routing?.isRouted
                     "
                   >
                     <span class="font-semibold text-green-800"
                       >Reserva Pagada Completamente.
                     </span>
                     <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                  </div>
+                  <div
+                    class="p-4 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-between"
+                    *ngIf="
+                      result.paymentStatus === PAYMENT_STATUS_DICT.FULLY_PAID &&
+                      result.routing?.isRouted
+                    "
+                  >
+                    <span class="font-semibold italic text-gray-600"
+                      >Esta reserva está pagada por otra reservación.
+                    </span>
+                    <span
+                      class="font-semibold text-gray-800 underline float-end"
+                      (click)="
+                        openCheckResultModal(result.routing?.parentId || '')
+                      "
+                      >Ver detalles
+                    </span>
+                    <i class="fas fa-router text-green-600 text-xl"></i>
                   </div>
                   <div
                     class="p-4 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between"
