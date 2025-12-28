@@ -9,20 +9,25 @@ export class LocalDatabaseService {
 
   public async loadCache(): Promise<StandardCheckResult[]> {
     const data = await window.electron.ipcRenderer.invoke('read');
-    const cache = data.map((result: any) => {
-      return {
-        reservation: JSON.parse(result.reservation),
-        documents: JSON.parse(result.documents),
-        paymentStatus: result.paymentStatus,
-        checkStatus: result.checkStatus,
-        lastCheck: result.lastCheck,
-        checkAgainAt: result.checkAgainAt,
-        prePaidMethod: JSON.parse(result.prePaidMethod),
-        activeCoupons: JSON.parse(result.activeCoupons),
-        ledgersStatus: JSON.parse(result.ledgersStatus),
-        routing: JSON.parse(result.routing || {}),
-      } as StandardCheckResult;
-    });
+    const cache = data
+      .map((result: any) => {
+        return {
+          reservation: JSON.parse(result.reservation),
+          documents: JSON.parse(result.documents),
+          paymentStatus: result.paymentStatus,
+          checkStatus: result.checkStatus,
+          lastCheck: result.lastCheck,
+          checkAgainAt: result.checkAgainAt,
+          prePaidMethod: JSON.parse(result.prePaidMethod),
+          activeCoupons: JSON.parse(result.activeCoupons),
+          ledgersStatus: JSON.parse(result.ledgersStatus),
+          routing: JSON.parse(result.routing || {}),
+        } as StandardCheckResult;
+      })
+      .sort(
+        (a: StandardCheckResult, b: StandardCheckResult) =>
+          Number(a.reservation.room) - Number(b.reservation.room)
+      );
 
     return cache;
   }
