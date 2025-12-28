@@ -15,12 +15,12 @@ export const DEFAULT_VCC_TYPE = 'INVALID';
 
 // Default prepaid method data
 export const DEFAULT_PREPAID_TYPE = 'NONE';
-export const DEFAULT_PREPAID_PROVIDER = 'NO VALID PROVIDER FOUND';
+export const DEFAULT_PREPAID_PROVIDER = 'NO_VALID_PROVIDER_FOUND';
 
 // Prepaid method names
-export const VIRTUAL_CREDIT_CARD = 'VIRTUAL CREDIT CARD';
+export const VIRTUAL_CREDIT_CARD = 'VIRTUAL_CREDIT_CARD';
 export const COUPON = 'COUPON';
-export const BONVOY_CERTIFICATE = 'BONVOY CERTICIATE';
+export const BONVOY_CERTIFICATE = 'BONVOY_CERTIFICATE';
 
 // Document types
 export const DOCUMENT_TYPE_COUPON = 'COUPON';
