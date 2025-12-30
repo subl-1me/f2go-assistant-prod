@@ -89,3 +89,6 @@ export const reportsByUser = {
   salesManager: ['rpt_Early_Bird', 'rpt_todaychin', 'rpt_CancelAdjust'],
   extras: ['rpt_guestbalance'],
 };
+
+// INVOICES
+export const NO_FISCAL_USE_CODE = 'SF01';

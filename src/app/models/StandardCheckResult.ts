@@ -1,3 +1,4 @@
+import InvoiceSettings from './InvoiceSettings';
 import PrePaidMethod from './PrePaidMethod';
 import Reservation from './Reservation';
 import Routing from './Routing';
@@ -13,4 +14,5 @@ export default interface StandardCheckResult {
   activeCoupons?: any[];
   ledgersStatus: any;
   routing?: Routing;
+  invoiceSettings?: InvoiceSettings;
 }

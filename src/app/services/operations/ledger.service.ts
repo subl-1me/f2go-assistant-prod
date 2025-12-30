@@ -177,7 +177,7 @@ export class LedgerService {
 
       // TODO: calculate how many nights the pymtn cover
       // Check if current night is paid
-      const appDate = '2025/12/26';
+      const appDate = '2025/12/29';
       const todayRate = rates.find((rate) => rate.date === appDate);
       if (!todayRate) {
         ledgersStatus.error = true;

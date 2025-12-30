@@ -2,37 +2,199 @@ import { Component, model, OnInit } from '@angular/core';
 import { LocalDatabaseService } from '../../../services/local-database.service';
 import StandardCheckResult from '../../../models/StandardCheckResult';
 import { NgIf } from '@angular/common';
+import { NO_FISCAL_USE_CODE } from '../../../const';
+import { InvoiceService } from '../../../services/operations/invoice.service';
+import { FormsModule } from '@angular/forms';
+import Reservation from '../../../models/Reservation';
+import { ReservationService } from '../../../services/operations/reservation.service';
 
 @Component({
   selector: 'app-today-departures',
-  imports: [NgIf],
+  imports: [NgIf, FormsModule],
   templateUrl: './today-departures.component.html',
   styleUrl: './today-departures.component.css',
 })
 export class TodayDeparturesComponent implements OnInit {
   public cache: StandardCheckResult[];
+  public todayDepartures: Reservation[];
+  public todayDeparturesDisplay: Reservation[];
+  public displayedCache: StandardCheckResult[];
   public isSelectedFiscalCode: boolean;
   public inputFiscalName: string;
   public inputFiscalCode: string;
   public searchResults: any[] = [];
   public preSelectedInvoiceData: any = null;
+  public markedReservations: any[] = [];
+
+  public displayedFiscalSearches: any = [];
+
+  public fiscalCodeInput: string;
+  public selectedReservationsToInvoice: any[];
 
   public invoicesConfig: any[] = [];
+  public isLoadingFiscalSearches: boolean;
 
-  constructor(private localDBService: LocalDatabaseService) {
+  constructor(
+    private localDBService: LocalDatabaseService,
+    private invoiceService: InvoiceService,
+    private reservationService: ReservationService
+  ) {
     this.cache = [];
     this.isSelectedFiscalCode = false;
     this.inputFiscalCode = '';
     this.inputFiscalName = '';
+    this.selectedReservationsToInvoice = [];
+    this.displayedFiscalSearches = [];
+    this.displayedCache = [];
+    this.fiscalCodeInput = '';
+    this.isLoadingFiscalSearches = false;
+    this.todayDepartures = [];
+    this.todayDeparturesDisplay = [];
   }
 
   private async getCache(): Promise<void> {
     this.cache = await this.localDBService.loadCache();
+    this.displayedCache = this.cache;
+    this.getTodayDepartures();
+  }
+
+  private getTodayDepartures(): void {
+    this.reservationService.getTodayDepartures().subscribe({
+      next: (response) => {
+        // map to reservation model
+        const data = JSON.parse(response);
+        this.todayDepartures = data.rows.map((rsrv: any) => {
+          return {
+            id: rsrv.rsrvCode,
+            marriotId: '',
+            guestName: rsrv.nameGuest,
+            room: rsrv.room,
+            roomType: rsrv.roomDescription,
+            dateIn: rsrv.dateIn,
+            dateOut: rsrv.dateOut,
+            reservationStatus: rsrv.statusGuest,
+            numberOfGuests: rsrv.peopleNo,
+            company: rsrv.company,
+            agency: rsrv.agency,
+            membership: rsrv.freqTvl || '',
+          } as Reservation;
+        });
+      },
+      error: (err) => {},
+    });
   }
 
   ngOnInit(): void {
     this.getCache();
   }
+
+  public searchForFiscalCode(): any {
+    if (this.fiscalCodeInput === '') {
+      return;
+    }
+
+    this.isLoadingFiscalSearches = true;
+    // search on Front
+    this.invoiceService.searchForReceptor(this.fiscalCodeInput).subscribe({
+      next: (response) => {
+        const data = JSON.parse(response);
+        this.displayedFiscalSearches = [...data];
+        this.isLoadingFiscalSearches = false;
+      },
+      error: (error) => {
+        console.log(error);
+      },
+    });
+  }
+
+  public markAsCustom(reservationId: string, fiscalData: any): void {
+    this.markedReservations.push({
+      reservationId,
+      mark: 'CUSTOM',
+      fiscalData,
+    });
+
+    this.clodeModal(reservationId);
+  }
+
+  private markAsSelected(reservationId: string): void {
+    const icon = document.getElementById(`select-rsrv-icon-${reservationId}`);
+    if (!icon) {
+      return;
+    }
+
+    icon.classList.remove('fa-circle');
+    icon.classList.remove('fa-regular');
+    icon.classList.add('fa-circle-check');
+    icon.classList.add('fa-solid');
+    console.log(this.selectedReservationsToInvoice);
+  }
+
+  private unmarkAsSelected(reservationId: string): void {
+    const icon = document.getElementById(`select-rsrv-icon-${reservationId}`);
+    if (!icon) {
+      return;
+    }
+
+    icon.classList.remove('fa-circle-check');
+    icon.classList.add('fa-circle');
+  }
+
+  public addToSelectedToInvoice(reservationId: string): void {
+    const target = this.cache.find(
+      (rsrv) => rsrv.reservation.id === reservationId
+    );
+    if (!target) {
+      return;
+    }
+    this.selectedReservationsToInvoice.push(target);
+    this.markAsSelected(reservationId);
+  }
+
+  public showInvoicerConfirmation(): void {}
+
+  public markAsGeneric(reservationId: string): void {
+    this.markedReservations.push({
+      reservationId,
+      mark: 'GENERIC',
+    });
+  }
+
+  public removeFromMark(reservationId: string): void {
+    this.markedReservations = this.markedReservations.filter(
+      (rsrv) => rsrv.reservationId !== reservationId
+    );
+  }
+
+  public isReservationMarkedAsGeneric(reservationId: string): boolean {
+    return (
+      this.markedReservations.find(
+        (rsrv) => rsrv.reservationId === reservationId
+      ).mark === 'GENERIC'
+    );
+  }
+
+  public isReservationMarkedAsCustom(reservationId: string): boolean {
+    return (
+      this.markedReservations.find(
+        (rsrv) => rsrv.reservationId === reservationId
+      ).mark === 'CUSTOM'
+    );
+  }
+
+  public getInvoiceData(reservationId: string): any {
+    return this.markedReservations.find(
+      (rsrv) => rsrv.reservationId === reservationId
+    );
+  }
+
+  public isReservationMarked(reservationId: string): boolean {
+    return this.markedReservations.find(
+      (rsrv) => rsrv.reservationId === reservationId
+    );
+  }
+
+  // public async searchForInvoicingData(): Promise<any> {}
 
   public openModal(modalId: string): void {
     const modalName = `invoice-input-`;

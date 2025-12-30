@@ -10,7 +10,7 @@ import Rate from '../../models/Rate';
 import { PAYLOAD_STATUS_CHIN, ROOM_TYPES } from '../../const';
 import { defaultQueue } from '../../utils/queues';
 import Routing from '../../models/Routing';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -236,8 +236,39 @@ export class ReservationService {
     return [];
   }
 
-  public async getChoutList(): Promise<Reservation[]> {
-    return [];
+  public getTodayDepartures(): Observable<any> {
+    const payload = {
+      ph: false,
+      pc: environment.HDN_001,
+      pn: '',
+      ci: '',
+      gpi: '',
+      ti: '',
+      rc: '',
+      rm: '',
+      fm: '',
+      to: '',
+      fq: '',
+      rs: '',
+      st: 'LS',
+      NoPax: '',
+      grp: '',
+      gs: 'CHOUT,CHIN,NOSHOW,POST',
+      sidx: 'NameGuest',
+      sord: 'asc',
+      rows: 100,
+      page: 1,
+      ss: false,
+      rcss: '',
+      user: 'HTJUGALDEA',
+      AddGuest: false,
+    };
+
+    return this.frontService.postRequest(
+      environment.FRONT_API_GET_RESERVATION_LIST,
+      payload,
+      true
+    );
   }
 
   public async getAllHistoricalReservations(): Promise<Reservation[]> {
