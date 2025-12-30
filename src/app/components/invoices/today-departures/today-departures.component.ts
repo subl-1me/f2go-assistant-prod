@@ -19,20 +19,18 @@ export class TodayDeparturesComponent implements OnInit {
   public todayDepartures: Reservation[];
   public todayDeparturesDisplay: Reservation[];
   public displayedCache: StandardCheckResult[];
+
   public isSelectedFiscalCode: boolean;
   public inputFiscalName: string;
   public inputFiscalCode: string;
   public searchResults: any[] = [];
   public preSelectedInvoiceData: any = null;
   public markedReservations: any[] = [];
-
-  public displayedFiscalSearches: any = [];
-
   public fiscalCodeInput: string;
+  public displayedFiscalSearches: any = [];
   public selectedReservationsToInvoice: any[];
-
-  public invoicesConfig: any[] = [];
   public isLoadingFiscalSearches: boolean;
+  public invoicesConfig: any[] = [];
 
   constructor(
     private localDBService: LocalDatabaseService,
@@ -50,12 +48,12 @@ export class TodayDeparturesComponent implements OnInit {
     this.isLoadingFiscalSearches = false;
     this.todayDepartures = [];
     this.todayDeparturesDisplay = [];
+    this.getTodayDepartures();
   }
 
   private async getCache(): Promise<void> {
     this.cache = await this.localDBService.loadCache();
     this.displayedCache = this.cache;
-    this.getTodayDepartures();
   }
 
   private getTodayDepartures(): void {
@@ -79,6 +77,7 @@ export class TodayDeparturesComponent implements OnInit {
             membership: rsrv.freqTvl || '',
           } as Reservation;
         });
+        this.todayDeparturesDisplay = [...this.todayDepartures];
       },
       error: (err) => {},
     });
@@ -86,6 +85,17 @@ export class TodayDeparturesComponent implements OnInit {
 
   ngOnInit(): void {
     this.getCache();
+  }
+
+  public hasFiscalDataOnCache(reservationId: string): boolean {
+    const cache = this.cache.find(
+      (rsrv) => rsrv.reservation.id === reservationId
+    );
+    if (!cache) {
+      return false;
+    }
+
+    return cache.invoiceSettings ? true : false;
   }
 
   public searchForFiscalCode(): any {
@@ -151,7 +161,27 @@ export class TodayDeparturesComponent implements OnInit {
     this.markAsSelected(reservationId);
   }
 
-  public showInvoicerConfirmation(): void {}
+  public showInvoicerConfirmation(): void {
+    const confirmationModal = document.getElementById('confirmation-modal');
+    if (!confirmationModal) {
+      return;
+    }
+
+    confirmationModal.classList.remove('hidden');
+  }
+
+  public confirmInvoicerOperation(): void {
+    this.closeInvoicerConfirmation();
+  }
+
+  private closeInvoicerConfirmation(): void {
+    const confirmationModal = document.getElementById('confirmation-modal');
+    if (!confirmationModal) {
+      return;
+    }
+
+    confirmationModal.classList.add('hidden');
+  }
 
   public markAsGeneric(reservationId: string): void {
     this.markedReservations.push({
