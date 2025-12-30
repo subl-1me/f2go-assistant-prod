@@ -32,6 +32,8 @@ export class TodayDeparturesComponent implements OnInit {
   public isLoadingFiscalSearches: boolean;
   public invoicesConfig: any[] = [];
 
+  public isToggledSelectAll: boolean;
+
   constructor(
     private localDBService: LocalDatabaseService,
     private invoiceService: InvoiceService,
@@ -49,6 +51,7 @@ export class TodayDeparturesComponent implements OnInit {
     this.todayDepartures = [];
     this.todayDeparturesDisplay = [];
     this.getTodayDepartures();
+    this.isToggledSelectAll = false;
   }
 
   private async getCache(): Promise<void> {
@@ -137,7 +140,14 @@ export class TodayDeparturesComponent implements OnInit {
     icon.classList.remove('fa-regular');
     icon.classList.add('fa-circle-check');
     icon.classList.add('fa-solid');
-    console.log(this.selectedReservationsToInvoice);
+  }
+
+  public resetAllSelectedData(): void {
+    this.markedReservations = this.markedReservations.filter((reservation) =>
+      this.selectedReservationsToInvoice.find(
+        (rsrv) => rsrv.id === reservation.id
+      )
+    );
   }
 
   private unmarkAsSelected(reservationId: string): void {
@@ -146,17 +156,33 @@ export class TodayDeparturesComponent implements OnInit {
       return;
     }
 
-    icon.classList.remove('fa-circle-check');
     icon.classList.add('fa-circle');
+    icon.classList.add('fa-regular');
+    icon.classList.remove('fa-circle-check');
+    icon.classList.remove('fa-solid');
   }
 
-  public addToSelectedToInvoice(reservationId: string): void {
-    const target = this.cache.find(
-      (rsrv) => rsrv.reservation.id === reservationId
+  public toggleSelectedToInvoice(reservationId: string): void {
+    const isSelected = this.selectedReservationsToInvoice.find(
+      (rsrv) => rsrv.id === reservationId
+    );
+    if (isSelected) {
+      this.unmarkAsSelected(reservationId);
+      this.selectedReservationsToInvoice =
+        this.selectedReservationsToInvoice.filter(
+          (rsrv) => rsrv.id !== reservationId
+        );
+      console.log(this.selectedReservationsToInvoice);
+      return;
+    }
+
+    const target = this.todayDepartures.find(
+      (departure) => departure.id === reservationId
     );
     if (!target) {
       return;
     }
+
     this.selectedReservationsToInvoice.push(target);
     this.markAsSelected(reservationId);
   }
@@ -170,17 +196,49 @@ export class TodayDeparturesComponent implements OnInit {
     confirmationModal.classList.remove('hidden');
   }
 
+  public updateDepartureList(): void {
+    this.getTodayDepartures();
+  }
+
   public confirmInvoicerOperation(): void {
     this.closeInvoicerConfirmation();
   }
 
-  private closeInvoicerConfirmation(): void {
+  public closeInvoicerConfirmation(): void {
     const confirmationModal = document.getElementById('confirmation-modal');
     if (!confirmationModal) {
       return;
     }
 
     confirmationModal.classList.add('hidden');
+  }
+
+  public toggleSelectAll(): void {
+    this.selectedReservationsToInvoice = [];
+    this.isToggledSelectAll = !this.isToggledSelectAll;
+    this.isToggledSelectAll
+      ? this.markAllAsSelected()
+      : this.markAllAsUnselected();
+  }
+
+  public markSelectedAsGeneric(): void {
+    this.selectedReservationsToInvoice.forEach((reservation) => {
+      this.markAsGeneric(reservation.id);
+    });
+  }
+
+  private markAllAsSelected(): void {
+    this.selectedReservationsToInvoice = [...this.todayDeparturesDisplay];
+    this.selectedReservationsToInvoice.forEach((rsrv) => {
+      this.markAsSelected(rsrv.id);
+    });
+  }
+
+  private markAllAsUnselected(): void {
+    this.selectedReservationsToInvoice = [];
+    this.todayDeparturesDisplay.forEach((rsrv) => {
+      this.unmarkAsSelected(rsrv.id);
+    });
   }
 
   public markAsGeneric(reservationId: string): void {

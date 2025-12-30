@@ -11,6 +11,7 @@
           >
             <button
               class="text-blue-600 hover:text-blue-800 p-1.5 rounded-full hover:bg-blue-100"
+              (click)="toggleSelectAll()"
             >
               <i class="fas fa-check-circle text-lg"></i>
             </button>
@@ -57,7 +58,7 @@
               <i
                 class="fa-regular fa-circle"
                 id="select-rsrv-icon-{{ reservation.id }}"
-                (click)="addToSelectedToInvoice(reservation.id)"
+                (click)="toggleSelectedToInvoice(reservation.id)"
               ></i>
             </button>
           </td>
@@ -534,16 +535,28 @@
       <button
         type="button"
         class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+        (click)="updateDepartureList()"
       >
         Actualizar
         <i class="fas fa-refresh mr-1"></i>
       </button>
       <button
+        *ngIf="selectedReservationsToInvoice.length > 0"
+        (click)="markSelectedAsGeneric()"
         type="button"
         class="text-white bg-amber-700 hover:bg-amber-800 focus:ring-4 focus:outline-none focus:ring-amber-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
       >
         Marcar seleccionados como generico
         <i class="fas fa-check-circle mr-1"></i>
+      </button>
+      <button
+        *ngIf="selectedReservationsToInvoice.length > 0"
+        (click)="resetAllSelectedData()"
+        type="button"
+        class="text-white bg-amber-700 hover:bg-amber-800 focus:ring-4 focus:outline-none focus:ring-amber-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
+      >
+        Reiniciar seleccionados
+        <i class="fas fa-trash mr-1"></i>
       </button>
       <button
         type="button"
@@ -607,6 +620,7 @@
         </button>
         <button
           class="px-5 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors font-medium flex items-center"
+          (click)="closeInvoicerConfirmation()"
         >
           <i class="fas fa-times mr-2"></i>
           Cerrar
