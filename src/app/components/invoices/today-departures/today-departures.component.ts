@@ -33,6 +33,8 @@ export class TodayDeparturesComponent implements OnInit {
   public invoicesConfig: any[] = [];
 
   public isToggledSelectAll: boolean;
+  public isLoadingDepartures: boolean;
+  public loadError: boolean;
 
   constructor(
     private localDBService: LocalDatabaseService,
@@ -52,6 +54,9 @@ export class TodayDeparturesComponent implements OnInit {
     this.todayDeparturesDisplay = [];
     this.getTodayDepartures();
     this.isToggledSelectAll = false;
+
+    this.isLoadingDepartures = false;
+    this.loadError = false;
   }
 
   private async getCache(): Promise<void> {
@@ -60,6 +65,7 @@ export class TodayDeparturesComponent implements OnInit {
   }
 
   private getTodayDepartures(): void {
+    this.isLoadingDepartures = true;
     this.reservationService.getTodayDepartures().subscribe({
       next: (response) => {
         // map to reservation model
@@ -81,8 +87,12 @@ export class TodayDeparturesComponent implements OnInit {
           } as Reservation;
         });
         this.todayDeparturesDisplay = [...this.todayDepartures];
+        this.isLoadingDepartures = false;
       },
-      error: (err) => {},
+      error: (err) => {
+        this.isLoadingDepartures = false;
+        this.loadError = true;
+      },
     });
   }
 
@@ -197,6 +207,8 @@ export class TodayDeparturesComponent implements OnInit {
   }
 
   public updateDepartureList(): void {
+    this.loadError = false;
+    this.isLoadingDepartures = false;
     this.getTodayDepartures();
   }
 
