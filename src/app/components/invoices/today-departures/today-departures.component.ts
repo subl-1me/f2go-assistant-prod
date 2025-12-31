@@ -1,12 +1,13 @@
-import { Component, model, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { LocalDatabaseService } from '../../../services/local-database.service';
 import StandardCheckResult from '../../../models/StandardCheckResult';
 import { NgIf } from '@angular/common';
-import { NO_FISCAL_USE_CODE } from '../../../const';
 import { InvoiceService } from '../../../services/operations/invoice.service';
 import { FormsModule } from '@angular/forms';
 import Reservation from '../../../models/Reservation';
 import { ReservationService } from '../../../services/operations/reservation.service';
+import { InvoicerService } from '../../../services/invoicer.service';
+import MarkedReservation from '../../../models/MarkedReservation';
 
 @Component({
   selector: 'app-today-departures',
@@ -25,10 +26,10 @@ export class TodayDeparturesComponent implements OnInit {
   public inputFiscalCode: string;
   public searchResults: any[] = [];
   public preSelectedInvoiceData: any = null;
-  public markedReservations: any[] = [];
+  public markedReservations: MarkedReservation[];
   public fiscalCodeInput: string;
   public displayedFiscalSearches: any = [];
-  public selectedReservationsToInvoice: any[];
+  public selectedReservationsToInvoice: Reservation[];
   public isLoadingFiscalSearches: boolean;
   public invoicesConfig: any[] = [];
 
@@ -39,7 +40,8 @@ export class TodayDeparturesComponent implements OnInit {
   constructor(
     private localDBService: LocalDatabaseService,
     private invoiceService: InvoiceService,
-    private reservationService: ReservationService
+    private reservationService: ReservationService,
+    private invoicerService: InvoicerService
   ) {
     this.cache = [];
     this.isSelectedFiscalCode = false;
@@ -54,7 +56,7 @@ export class TodayDeparturesComponent implements OnInit {
     this.todayDeparturesDisplay = [];
     this.getTodayDepartures();
     this.isToggledSelectAll = false;
-
+    this.markedReservations = [];
     this.isLoadingDepartures = false;
     this.loadError = false;
   }
@@ -155,7 +157,7 @@ export class TodayDeparturesComponent implements OnInit {
   public resetAllSelectedData(): void {
     this.markedReservations = this.markedReservations.filter((reservation) =>
       this.selectedReservationsToInvoice.find(
-        (rsrv) => rsrv.id === reservation.id
+        (rsrv) => rsrv.id === reservation.reservationId
       )
     );
   }
@@ -212,8 +214,12 @@ export class TodayDeparturesComponent implements OnInit {
     this.getTodayDepartures();
   }
 
-  public confirmInvoicerOperation(): void {
+  public async confirmInvoicerOperation(): Promise<void> {
     this.closeInvoicerConfirmation();
+    const invoicerResponse = await this.invoicerService.performInvoicer(
+      this.selectedReservationsToInvoice,
+      this.markedReservations
+    );
   }
 
   public closeInvoicerConfirmation(): void {
@@ -250,6 +256,7 @@ export class TodayDeparturesComponent implements OnInit {
     this.selectedReservationsToInvoice = [];
     this.todayDeparturesDisplay.forEach((rsrv) => {
       this.unmarkAsSelected(rsrv.id);
+      InvoicerService;
     });
   }
 
@@ -267,19 +274,19 @@ export class TodayDeparturesComponent implements OnInit {
   }
 
   public isReservationMarkedAsGeneric(reservationId: string): boolean {
-    return (
-      this.markedReservations.find(
-        (rsrv) => rsrv.reservationId === reservationId
-      ).mark === 'GENERIC'
+    const isMarked = this.markedReservations.find(
+      (rsrv) => rsrv.reservationId === reservationId
     );
+
+    return isMarked?.mark === 'GENERIC';
   }
 
   public isReservationMarkedAsCustom(reservationId: string): boolean {
-    return (
-      this.markedReservations.find(
-        (rsrv) => rsrv.reservationId === reservationId
-      ).mark === 'CUSTOM'
+    const isMarked = this.markedReservations.find(
+      (rsrv) => rsrv.reservationId === reservationId
     );
+
+    return isMarked?.mark === 'CUSTOM';
   }
 
   public getInvoiceData(reservationId: string): any {
@@ -289,7 +296,7 @@ export class TodayDeparturesComponent implements OnInit {
   }
 
   public isReservationMarked(reservationId: string): boolean {
-    return this.markedReservations.find(
+    return this.markedReservations.some(
       (rsrv) => rsrv.reservationId === reservationId
     );
   }
