@@ -1,9 +1,9 @@
 export default interface Invoice {
   ledgerNo: number | Number;
-  RFC: string;
-  RFCName: string;
+  fiscalCode: string;
+  fiscalName: string;
   status: string;
+  isGeneric: boolean;
   receiptId?: string;
   downloadUrl?: string;
-  isGeneric: boolean;
 }

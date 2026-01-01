@@ -54,11 +54,11 @@ export class TodayDeparturesComponent implements OnInit {
     this.isLoadingFiscalSearches = false;
     this.todayDepartures = [];
     this.todayDeparturesDisplay = [];
-    this.getTodayDepartures();
     this.isToggledSelectAll = false;
     this.markedReservations = [];
     this.isLoadingDepartures = false;
     this.loadError = false;
+    this.getTodayDepartures();
   }
 
   private async getCache(): Promise<void> {
@@ -137,6 +137,7 @@ export class TodayDeparturesComponent implements OnInit {
       reservationId,
       mark: 'CUSTOM',
       fiscalData,
+      ledgerTarget: 1,
     });
 
     this.clodeModal(reservationId);
@@ -264,6 +265,7 @@ export class TodayDeparturesComponent implements OnInit {
     this.markedReservations.push({
       reservationId,
       mark: 'GENERIC',
+      ledgerTarget: 1,
     });
   }
 

@@ -92,3 +92,23 @@ export const reportsByUser = {
 
 // INVOICES
 export const NO_FISCAL_USE_CODE = 'SF01';
+
+// INVOICER RECEPTORS using Front2Go schemas
+export const GENERIC_FISCAL_RECEPTOR = {
+  receptorId: '43',
+  receptorRfc: 'XAXX010101000',
+  receptorNombre: 'Generico',
+  receptorRegimen: '616',
+  receptorCpostal: '01000',
+  receptorUsoCfdi: 'S01',
+};
+
+// Default mrrt
+export const MARRIOTT_RECEPTOR = {
+  receptorId: '132939',
+  receptorRfc: 'XEXX010101000',
+  receptorNombre: 'MARRIOTT SWITZERLAND LICENSING COMPANY S AR L',
+  receptorRegimen: '616',
+  receptorCpostal: '00000',
+  receptorUsoCfdi: 'S01',
+};

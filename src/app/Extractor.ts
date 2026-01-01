@@ -1,3 +1,5 @@
+import { GENERIC_FISCAL_RECEPTOR } from './const';
+import Invoice from './models/Invoice';
 import NotesByUser from './models/NotesByUser';
 import VCCProvidersPatterns from './models/VCCProvidersPatterns';
 import { VCC_PROVIDERS_PATTERN_LIST } from './Patterns';
@@ -119,7 +121,7 @@ export default class Extractor {
     return rateCode;
   }
 
-  public extractReservationRouting(text: string): any {
+  public extractReservationRouting(text: string): Invoice[] {
     const getRoutingPattern = new RegExp(`\\bitemArray\\s*=\\s*"(.*?)"`);
     const match = text.match(getRoutingPattern);
     if (!match) {
@@ -128,5 +130,64 @@ export default class Extractor {
     const itemArrayParsed = match[1].replace(/\\u0022/g, `"`);
     const routings = JSON.parse(itemArrayParsed);
     return routings;
+  }
+
+  extractInvoices(text: string): any {
+    const invoicesRowPattern =
+      /<div class="row rowFacturas esquinas"[^>]*>([\s\S]*?)<\/div>\s*<\/div>\s*<\/div>/gm;
+    const invoicesRowsMatch = text.match(invoicesRowPattern);
+    if (!invoicesRowsMatch) {
+      return [];
+    }
+
+    if (invoicesRowsMatch.length === 0) {
+      return [];
+    }
+
+    // scrap for each invoices row
+    const reservationIdPattern = /\d{8}\.\d{1}/;
+    const rfcPattern =
+      /[a-zA-Z0-9]{3}\d{7}[a-zA-Z0-9]{1}\d{1}|[a-zA-Z0-9]{3}\d{6}[a-zA-Z0-9]{2}\d{1}|[a-zA-Z0-9]{3}\d{6}[a-zA-Z0-9]{1}\d{2}|[a-zA-Z0-9]{3}\d{7}[a-zA-Z0-9]{2}|[a-zA-Z0-9]{3}\d{6}[a-zA-Z0-9]{3}/;
+    const rfcFiscalNamePattern =
+      /<label ID="lblcomprobante_emisor">(.*?)<\/label>/;
+
+    let invoices: Invoice[] = [];
+    invoicesRowsMatch.forEach((row) => {
+      let invoice: Invoice = {
+        ledgerNo: 1,
+        fiscalCode: '',
+        fiscalName: '',
+        status: '',
+        isGeneric: false,
+      };
+
+      const reservationIdMatch = row.match(reservationIdPattern);
+      if (reservationIdMatch) {
+        const reservationIdSegments = reservationIdMatch[0].split('.');
+        invoice.ledgerNo = Number(reservationIdSegments[1]);
+      }
+
+      const rfcMatch = row.match(rfcPattern);
+      if (rfcMatch) {
+        invoice.fiscalCode = rfcMatch[0];
+      }
+
+      const fiscalNameMatch = row.match(rfcFiscalNamePattern);
+      if (fiscalNameMatch) {
+        invoice.fiscalName = fiscalNameMatch[1];
+      }
+
+      const invoiceStatusMatch = row.match(/Timbrado|PreFactura/);
+      if (invoiceStatusMatch) {
+        invoice.status = invoiceStatusMatch[0];
+      }
+
+      invoice.isGeneric =
+        invoice.fiscalName.includes(GENERIC_FISCAL_RECEPTOR.receptorNombre) &&
+        invoice.fiscalCode === GENERIC_FISCAL_RECEPTOR.receptorRfc;
+      invoices.push(invoice);
+    });
+
+    return invoices;
   }
 }

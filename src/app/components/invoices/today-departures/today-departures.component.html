@@ -144,12 +144,27 @@
               </div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
-              <span
+              <form class="max-w-sm mx-auto">
+                <select
+                  id="countries"
+                  class="block w-full px-3 py-2.5 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand shadow-xs placeholder:text-body"
+                >
+                  <option selected>Seleccionar folio</option>
+                  @for(ledger of reservation.ledgers; track $index){
+                  <option value="{{ ledger.ledgerNo }}">
+                    {{ ledger.ledgerNo }}
+                  </option>
+
+                  }
+                </select>
+              </form>
+
+              <!-- <span
                 class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium"
                 >#{{
                   reservation.ledgers ? reservation.ledgers[0].ledgerNo : 1
                 }}</span
-              >
+              > -->
             </td>
           </tr>
 
