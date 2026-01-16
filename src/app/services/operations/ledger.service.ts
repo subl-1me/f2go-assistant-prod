@@ -5,6 +5,11 @@ import { FrontService } from '../front-service';
 import Transaction from '../../models/Transaction';
 import { ReservationService } from './reservation.service';
 import { ledgerQueue } from '../../utils/queues';
+import { InvoiceService } from './invoice.service';
+import LedgerCheckerResponse from '../../models/LedgerCheckerResponse';
+import LedgerClassification from '../../models/LedgerClassification';
+
+type SecureLedger = Omit<Ledger, 'transactions'>;
 
 @Injectable({
   providedIn: 'root',
@@ -12,8 +17,14 @@ import { ledgerQueue } from '../../utils/queues';
 export class LedgerService {
   constructor(
     private frontService: FrontService,
-    private reservationService: ReservationService
+    private reservationService: ReservationService,
+    private invoiceService: InvoiceService
   ) {}
+
+  private createSecureTypedLedger(ledger: Ledger): SecureLedger {
+    const { transactions, ...secureLedger } = ledger;
+    return secureLedger;
+  }
 
   public async getReservationledger(reservationId: string): Promise<Ledger[]> {
     const API_URI = environment.FRONT_API_GET_RSRV_LEDGERS.replace(
@@ -97,11 +108,35 @@ export class LedgerService {
   }
 
   public async classifyLedgers(ledgers: Ledger[]): Promise<any> {
+    const reservationId = ledgers[0].reservationId;
+    const invoices = await this.invoiceService.getReservationInvoices(
+      reservationId
+    );
+
+    ledgers.forEach((ledger) => {
+      const invoice = invoices.find(
+        (invoice) => invoice.ledgerNo === ledger.ledgerNo
+      );
+      if (invoice) {
+        ledger.invoice = invoice;
+        ledger.isInvoiced = true;
+      }
+    });
+
     const active = ledgers.filter((ledger) =>
       ledger.transactions.find(
         (trans) => trans.type === 'PAYMENT' || trans.type === 'CHARGE'
       )
     );
+
+    // re-mark principal ledger
+    if (active.length > 0) {
+      ledgers.forEach((ledger) => {
+        ledger.isPrincipal = false;
+      });
+
+      active[0].isPrincipal = true;
+    }
 
     const inactive = ledgers.filter(
       (ledger) => ledger.transactions.length === 0 && ledger.status === 'OPEN'
@@ -124,14 +159,20 @@ export class LedgerService {
       (ledger) => ledger.transactions.length === 0 && ledger.status === 'CLOSED'
     );
 
-    return { active, inactive, invoiced, invoicable, nousable };
+    return {
+      active,
+      inactive,
+      invoiced,
+      invoicable,
+      nousable,
+    };
   }
 
   public async checkLedgers(
     ledgers: Ledger[],
     reservationId: string
-  ): Promise<any> {
-    let ledgersStatus: any = {
+  ): Promise<LedgerCheckerResponse> {
+    let response: LedgerCheckerResponse = {
       error: false,
       errors: [],
       isPendingToPay: true,
@@ -140,9 +181,18 @@ export class LedgerService {
       isTodayPaid: false,
       ledgersPendingToPay: [],
       ledgersPaid: [],
+      classification: {
+        active: [],
+        inactive: [],
+        invoicable: [],
+        invoiced: [],
+        nousable: [],
+      },
     };
 
-    const { active } = await this.classifyLedgers(ledgers);
+    const classification = await this.classifyLedgers(ledgers);
+    response.classification = classification;
+    const { active } = classification;
 
     // get reservation rates
     const rates = await this.reservationService.getReservationRates(
@@ -167,52 +217,74 @@ export class LedgerService {
       }, 0);
 
       totalPaymentsAmount = Math.abs(totalPaymentsAmount);
-
       // TODO: Check if total pymnt amount covers all reseservation
       if (totalPaymentsAmount === totalToPay) {
-        ledgersStatus.isFullyPaid = true;
-        ledgersStatus.isPendingToPay = false;
-        ledgersStatus.ledgersPaid.push(ledger.ledgerNo);
+        response.isFullyPaid = true;
+        response.isPendingToPay = false;
+        response.ledgersPaid.push(ledger.ledgerNo);
       }
 
       // TODO: calculate how many nights the pymtn cover
       // Check if current night is paid
-      const appDate = '2025/12/30';
+      const appDate = environment.APP_DATE;
       const todayRate = rates.find((rate) => rate.date === appDate);
       if (!todayRate) {
-        ledgersStatus.error = true;
-        ledgersStatus.errors.push({ message: 'Today rate not found.' });
+        response.error = true;
+        response.errors.push({ message: 'Today rate not found.' });
       } else {
         if (totalPaymentsAmount >= todayRate.amount) {
           // today is covered
-          ledgersStatus.isTodayPaid = true;
-          ledgersStatus.isPendingToPay = false;
+          response.isTodayPaid = true;
+          response.isPendingToPay = false;
         }
       }
 
       // TODO: determinate if ledgers exceed of payments
       if (totalPaymentsAmount > totalToPay) {
         //TODO: Could be router
-
-        ledgersStatus.error = true;
-        ledgersStatus.isTodayPaid = true;
-        ledgersStatus.isPendingToPay = false;
+        response.error = true;
+        response.isTodayPaid = true;
+        response.isPendingToPay = false;
         const diff = parseFloat(
           (totalPaymentsAmount - totalToPay).toString()
         ).toFixed(2);
-        ledgersStatus.errors.push({
+        response.errors.push({
           message: `Payments exceed reservation's total on ledger #${ledger.ledgerNo} for $${diff}`,
         });
       }
     });
 
-    const ledgersWithOutPayment = active.filter(
-      (ledger: Ledger) =>
-        !ledger.transactions.find((trans) => trans.type === 'PAYMENT')
+    const ledgersWithOutPayment = active
+      .filter(
+        (ledger: Ledger) =>
+          !ledger.transactions.find((trans) => trans.type === 'PAYMENT')
+      )
+      .map((ledger: Ledger) => ledger.ledgerNo);
+
+    response.ledgersPendingToPay = [...ledgersWithOutPayment];
+
+    // make secure reservation's ledgers by removing transactions object
+    const activeSecure = classification.active.map((ledger: Ledger) =>
+      this.createSecureTypedLedger(ledger)
+    );
+    const inactiveSecure = classification.inactive.map((ledger: Ledger) =>
+      this.createSecureTypedLedger(ledger)
+    );
+    const invoicedSecure = classification.invoiced.map((ledger: Ledger) =>
+      this.createSecureTypedLedger(ledger)
+    );
+    const invoicableSecure = classification.invoicable.map((ledger: Ledger) =>
+      this.createSecureTypedLedger(ledger)
+    );
+    const nousableSecure = classification.nousable.map((ledger: Ledger) =>
+      this.createSecureTypedLedger(ledger)
     );
 
-    ledgersStatus.ledgersPendingToPay = [...ledgersWithOutPayment];
-
-    return ledgersStatus;
+    response.classification.active = [...activeSecure];
+    response.classification.inactive = [...inactiveSecure];
+    response.classification.invoiced = [...invoicedSecure];
+    response.classification.invoicable = [...invoicableSecure];
+    response.classification.nousable = [...nousableSecure];
+    return response;
   }
 }

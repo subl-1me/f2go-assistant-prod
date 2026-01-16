@@ -92,6 +92,7 @@ export const reportsByUser = {
 
 // INVOICES
 export const NO_FISCAL_USE_CODE = 'SF01';
+export const FISCAL_GENERAL_USE_CODE = 'G03';
 
 // INVOICER RECEPTORS using Front2Go schemas
 export const GENERIC_FISCAL_RECEPTOR = {

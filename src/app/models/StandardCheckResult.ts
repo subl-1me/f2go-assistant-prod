@@ -1,4 +1,5 @@
 import InvoiceSettings from './InvoiceSettings';
+import LedgerCheckerResponse from './LedgerCheckerResponse';
 import PrePaidMethod from './PrePaidMethod';
 import Reservation from './Reservation';
 import Routing from './Routing';
@@ -12,7 +13,7 @@ export default interface StandardCheckResult {
   checkAgainAt?: Date | string;
   prePaidMethod?: PrePaidMethod;
   activeCoupons?: any[];
-  ledgersStatus: any;
+  ledgersStatus: LedgerCheckerResponse;
   routing?: Routing;
   invoiceSettings?: InvoiceSettings;
 }

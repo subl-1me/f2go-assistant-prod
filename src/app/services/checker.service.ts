@@ -8,6 +8,7 @@ import {
   DEFAULT_PREPAID_TYPE,
   DOCUMENT_TYPE_COUPON,
   DOCUMENT_TYPE_UNSUPORTED,
+  FISCAL_GENERAL_USE_CODE,
   PAYMENT_STATUS_ERROR,
   PAYMENT_STATUS_FULLY_PAID,
   PAYMENT_STATUS_MASTER,
@@ -31,6 +32,9 @@ import { ReservationService } from './operations/reservation.service';
 import { LedgerService } from './operations/ledger.service';
 import { PrepaidService } from './operations/prepaid.service';
 import Ledger from '../models/Ledger';
+import InvoiceSettings from '../models/InvoiceSettings';
+import LedgerCheckerResponse from '../models/LedgerCheckerResponse';
+import PrePaidMethod from '../models/PrePaidMethod';
 
 @Injectable({
   providedIn: 'root',
@@ -204,7 +208,23 @@ export class CheckerService {
       checkStatus: CHECKER_STATUS_PENDING,
       paymentStatus: PAYMENT_STATUS_PENDING,
       documents: [],
-      ledgersStatus: null,
+      ledgersStatus: {
+        error: false,
+        errors: [],
+        isFullyPaid: false,
+        isPartialPay: false,
+        isPendingToPay: true,
+        isTodayPaid: false,
+        ledgersPaid: [],
+        ledgersPendingToPay: [],
+        classification: {
+          active: [],
+          inactive: [],
+          invoicable: [],
+          invoiced: [],
+          nousable: [],
+        },
+      },
       lastCheck: new Date(),
     };
 
@@ -271,7 +291,6 @@ export class CheckerService {
     );
 
     checkResult.ledgersStatus = ledgerCheck;
-
     if (prePaidMethod.type !== DEFAULT_PREPAID_TYPE) {
       checkResult.prePaidMethod = prePaidMethod;
       checkResult.paymentStatus = PAYMENT_STATUS_PREPAID;
@@ -303,14 +322,8 @@ export class CheckerService {
       }
     }
 
-    const {
-      errors,
-      error,
-      isFullyPaid,
-      isTodayPaid,
-      isPendingToPay,
-      isPartialPay,
-    } = ledgerCheck;
+    const { isFullyPaid, isTodayPaid, isPendingToPay, isPartialPay } =
+      ledgerCheck;
 
     if (isPendingToPay && !checkResult.prePaidMethod) {
       checkResult.paymentStatus = PAYMENT_STATUS_PENDING;
@@ -363,8 +376,45 @@ export class CheckerService {
     );
     reservation.rates = rates;
 
+    const invoiceSettings = this.determinateInvoiceSettings(
+      reservation.id,
+      ledgerCheck,
+      checkResult.activeCoupons || null
+    );
+
+    checkResult.invoiceSettings = invoiceSettings;
     checkResult.checkStatus = CHECKER_STATUS_CHECKED;
     return checkResult;
+  }
+
+  private determinateInvoiceSettings(
+    reservationId: string,
+    ledgerCheck: LedgerCheckerResponse,
+    activeCoupon: any
+  ): InvoiceSettings {
+    let invoiceSettings: InvoiceSettings = {
+      reservationTarget: reservationId,
+      ledgerTarget: 1, // default
+      isGeneric: false,
+      fiscalCode: '',
+      emails: [],
+      cfdiUse: FISCAL_GENERAL_USE_CODE,
+    };
+
+    // determinate invoice settings based on first coupon text extraction
+    if (activeCoupon && activeCoupon.length > 0) {
+      const coupon = activeCoupon[0];
+      const fiscalCode = coupon.extraction.invoiceFiscalCodeTarget;
+      const emails = [...coupon.extraction.invoiceEmailTarget];
+      invoiceSettings.fiscalCode = fiscalCode || '';
+      invoiceSettings.emails = emails || [];
+    }
+
+    // determinate ledger target based on ledger check active ledgers
+    const firstActiveLedger = ledgerCheck.classification.active[0];
+    invoiceSettings.ledgerTarget = firstActiveLedger.ledgerNo || 1;
+
+    return invoiceSettings;
   }
 
   private async downloadAttachedDocuments(
@@ -429,7 +479,6 @@ export class CheckerService {
     const ledgers = await this.ledgerService.getReservationledger(
       reservation.id
     );
-    reservation.ledgers = ledgers;
 
     // load ledgers transactions
     const ledgerTransactionsPromises = ledgers.map((ledger) => {
@@ -461,7 +510,10 @@ export class CheckerService {
     );
 
     // search for routings
-    const routings = await this.reservationService.getRouting(reservation);
+    const routings = await this.reservationService.getRouting(
+      reservation,
+      ledgers
+    );
 
     return {
       ledgers,

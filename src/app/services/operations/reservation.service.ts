@@ -11,6 +11,7 @@ import { PAYLOAD_STATUS_CHIN, ROOM_TYPES } from '../../const';
 import { defaultQueue } from '../../utils/queues';
 import Routing from '../../models/Routing';
 import { firstValueFrom, Observable } from 'rxjs';
+import Ledger from '../../models/Ledger';
 
 @Injectable({
   providedIn: 'root',
@@ -517,8 +518,11 @@ export class ReservationService {
     }
   }
 
-  public async getRouting(reservation: Reservation): Promise<any> {
-    const routingTasks = reservation.ledgers?.map((ledger) => {
+  public async getRouting(
+    reservation: Reservation,
+    ledgers: Ledger[]
+  ): Promise<any> {
+    const routingTasks = ledgers.map((ledger) => {
       return async () => {
         const formData = new FormData();
         formData.append('_hdn001', environment.HDN_001);
