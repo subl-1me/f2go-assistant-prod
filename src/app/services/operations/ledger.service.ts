@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import Ledger from '../../models/Ledger';
-import { environment } from '../../../environment';
+import { environment } from '../../../environment.example';
 import { FrontService } from '../front-service';
 import Transaction from '../../models/Transaction';
 import { ReservationService } from './reservation.service';

@@ -11,7 +11,7 @@ import {
 } from '../const';
 import CouponExtraction from '../models/CouponExtraction';
 import Reservation from '../models/Reservation';
-import { environment } from '../../environment';
+import { environment } from '../../environment.example';
 import Comparation from '../models/Comparation';
 import CouponDataExtraction from '../shared/coupon-extractions';
 import Comparator from '../shared/comparator';

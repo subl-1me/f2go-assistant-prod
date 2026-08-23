@@ -16,9 +16,7 @@ export class BackgroundProcessServiceService {
     this.processes = [];
   }
 
-  /**
-   * Inicia un nuevo proceso en segundo plano
-   */
+
   startProcess(name: string, estimatedTime: number, metadata?: any): string {
     const processId = this.generateId();
     const newProcess: BackgroundProcess = {
@@ -35,7 +33,6 @@ export class BackgroundProcessServiceService {
     this.processes = [...this.processes, newProcess];
     this.emitUpdate();
 
-    // Simulamos que el proceso comienza automáticamente después de 500ms
     setTimeout(
       () => this.updateProcess(processId, { status: 'Procesando' }),
       500
@@ -44,9 +41,7 @@ export class BackgroundProcessServiceService {
     return processId;
   }
 
-  /**
-   * Actualiza un proceso existente
-   */
+ 
   updateProcess(
     processId: string,
     update: {
@@ -75,9 +70,7 @@ export class BackgroundProcessServiceService {
     this.emitUpdate();
   }
 
-  /**
-   * Completa un proceso exitosamente
-   */
+
   completeProcess(processId: string): void {
     this.updateProcess(processId, {
       progress: 100,
@@ -85,34 +78,26 @@ export class BackgroundProcessServiceService {
     });
   }
 
-  /**
-   * Marca un proceso como fallido
-   */
+
   failProcess(processId: string, error?: any): void {
     this.updateProcess(processId, {
       status: 'Fallido',
     });
   }
 
-  /**
-   * Obtiene un proceso por su ID
-   */
+
   getProcess(processId: string): BackgroundProcess | undefined {
     return this.processes.find((p) => p.id === processId);
   }
 
-  /**
-   * Obtiene todos los procesos activos (no completados)
-   */
+
   getActiveProcesses(): BackgroundProcess[] {
     return this.processes.filter(
       (p) => p.status !== 'Completado' && p.status !== 'Fallido'
     );
   }
 
-  /**
-   * Elimina procesos completados después de cierto tiempo
-   */
+
   private cleanCompletedProcesses(): void {
     const now = new Date();
     const completedProcessLifetime = 5 * 60 * 1000; // 5 minutos para procesos completados
@@ -131,9 +116,7 @@ export class BackgroundProcessServiceService {
     this.emitUpdate();
   }
 
-  /**
-   * Elimina un proceso manualmente
-   */
+
   removeProcess(processId: string): void {
     this.processes = this.processes.filter((p) => p.id !== processId);
     this.emitUpdate();

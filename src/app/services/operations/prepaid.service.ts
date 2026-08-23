@@ -10,7 +10,7 @@ import {
 import { ReservationService } from './reservation.service';
 import Extractor from '../../Extractor';
 import { FrontService } from '../front-service';
-import { environment } from '../../../environment';
+import { environment } from '../../../environment.example';
 import { HttpParams } from '@angular/common/http';
 import { lastValueFrom, map } from 'rxjs';
 import { DocumentAnalyzerService } from '../document-analyzer.service';

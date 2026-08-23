@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import Reservation from '../../models/Reservation';
-import { environment } from '../../../environment';
+import { environment } from '../../../environment.example';
 import { FrontService } from '../front-service';
 import { HttpParams } from '@angular/common/http';
 import NotesByUser from '../../models/NotesByUser';

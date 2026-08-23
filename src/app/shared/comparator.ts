@@ -1,4 +1,4 @@
-import { environment } from '../../environment';
+import { environment } from '../../environment.example';
 import Comparation from '../models/Comparation';
 import CouponExtraction from '../models/CouponExtraction';
 import Reservation from '../models/Reservation';

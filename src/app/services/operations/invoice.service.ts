@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { FrontService } from '../front-service';
-import { environment } from '../../../environment';
+import { environment } from '../../../environment.example';
 import { Observable } from 'rxjs';
 import { defaultQueue } from '../../utils/queues';
 import Extractor from '../../Extractor';

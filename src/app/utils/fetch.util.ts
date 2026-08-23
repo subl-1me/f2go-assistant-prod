@@ -1,4 +1,4 @@
-import { environment } from '../../environment';
+import { environment } from '../../environment.example';
 
 const batchSize = Number(environment.BATCH_SIZE) || 3; // default
 

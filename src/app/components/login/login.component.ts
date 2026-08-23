@@ -35,4 +35,18 @@ export class LoginComponent {
     this.router.navigate(['/']);
     this.isLoading = false;
   }
+
+  public closeAlertModal(): void{
+    let modal = document.getElementById('alert-modal');
+    if(!modal){
+      alert('Error trying to close alert. Try again');
+      return;
+    }
+
+    modal.classList.add('hidden');
+  }
+
+  public closeApp():void{
+    window.close();
+  }
 }

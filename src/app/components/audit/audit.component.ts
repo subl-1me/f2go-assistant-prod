@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { FrontService } from '../../services/front-service';
-import { environment } from '../../../environment';
+import { environment } from '../../../environment.example';
 
 @Component({
   selector: 'app-audit',

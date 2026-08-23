@@ -9,7 +9,7 @@ import {
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
 import { saveTestResults } from '../utils/test-utils';
-import { environment } from '../../environment';
+import { environment } from '../../environment.example';
 import { lastValueFrom } from 'rxjs';
 
 describe('DocumentAnalyzerService', () => {

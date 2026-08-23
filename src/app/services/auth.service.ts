@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { environment } from '../../environment';
+import { environment } from '../../environment.example';
 import { FrontService } from './front-service';
 import Extractor from '../Extractor';
 import Operator from '../models/operator';
@@ -241,22 +241,4 @@ export class AuthService {
     return formData;
   }
 
-  // optional
-  // private saveAspNetCoreAntiforgeryToken(cookies: string | null): void {
-  //   if (cookies) {
-  //     const aspNetTokenPattern = /\.AspNetCore\.Antiforgery[^;]*;/g;
-  //     const aspNetForgeryCookie = cookies.match(aspNetTokenPattern);
-  //     if (aspNetForgeryCookie) {
-  //       localStorage.setItem(
-  //         'antiForgeryToken',
-  //         aspNetForgeryCookie[0].replace(';', '').trim()
-  //       );
-  //     } else {
-  //       this.isLoading = false;
-  //       alert(
-  //         'Authentication failed. Please, restart the application. \n\nError details: Antiforgery token not found (L2).'
-  //       );
-  //     }
-  //   }
-  // }
 }
