@@ -115,7 +115,6 @@
             class="absolute inset-y-0 right-0 pr-3 flex items-center"
             [disabled]="loginForm.invalid || isLoading"
           >
-            <i class="fas fa-eye-slash text-gray-400 hover:text-blue-600"></i>
           </button>
         </div>
       </div>
@@ -139,7 +138,7 @@
 
       <!-- Login button -->
       <button
-        [disabled]="loginForm.invalid || isLoading"
+        [disabled]="loginForm.invalid || isLoading || operator.username === '' || operator.password === ''"
         type="submit"
         class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-xl text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
       >
@@ -171,6 +170,10 @@
           <span class="ms-2">Iniciando sesión...</span>
         </div>
       </button>
+
+      <div class="mt-6 text-center text-sm text-red-600">
+      <p>{{loadingMessage}}</p>
+    </div>
 
       <!-- Divider -->
       <div class="relative">

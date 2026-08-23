@@ -4,6 +4,7 @@ import { FormsModule, NgForm } from '@angular/forms';
 import { Router } from '@angular/router';
 import { NgIf } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
+import { environment } from '../../../environment.example';
 
 @Component({
   selector: 'app-login',
@@ -15,6 +16,7 @@ import { AuthService } from '../../services/auth.service';
 export class LoginComponent {
   public operator: Operator;
   public isLoading: boolean = false;
+  public loadingMessage: string = '';
 
   constructor(private authService: AuthService, private router: Router) {
     this.operator = {
@@ -24,9 +26,13 @@ export class LoginComponent {
   }
 
   public async onSubmit(form: NgForm): Promise<void> {
+    if(environment.FRONT_API_LOGIN === ''){
+      this.loadingMessage = 'Para continuar debe tener acceso a los endpoints correspondientes para realizar las solicitudes segun cada acción.'
+      return;
+    }
+
     if (form.invalid) {
       // TODO: Seng feedback
-
       return;
     }
 

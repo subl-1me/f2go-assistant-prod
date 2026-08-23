@@ -20,8 +20,25 @@ const createWindow = async () => {
     },
   });
 
+
+  // if test use localhost:4200 for angular
+  
   await win.loadFile(path.join(__dirname, "/src/loader.html"));
-  await win.loadURL("http://localhost:4200/");
+  const maxAttempts = 30;
+  for (let i = 0; i < maxAttempts; i++) {
+    try {
+      await win.loadFile(path.join(__dirname, "/dist/f2go-assistant/browser/index.html"));
+      win.show();
+      break;
+    } catch (error) {
+      if (i === maxAttempts - 1) {
+        await win.loadFile(path.join(__dirname, "/src/error.html"));
+        win.show();
+        throw new Error('Angular dev server no responde');
+      }
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
 };
 
 app.whenReady().then(() => {

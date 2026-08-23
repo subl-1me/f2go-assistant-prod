@@ -7,7 +7,7 @@
     "proxy": "node proxy.js",
     "electron": "concurrently \"ng serve\" \"electron .\"",
     "npm start": "ng serve",
-    "build": "ng build",
+    "build": "ng build && electron .",
     "watch": "ng build --watch --configuration development",
     "extractor-test": "ng test --include='**/document-analyzer.service.spec.ts'",
     "ts": "ts-node couponExtractor.ts",
